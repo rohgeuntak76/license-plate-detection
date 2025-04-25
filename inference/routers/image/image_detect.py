@@ -1,10 +1,10 @@
 from fastapi import APIRouter
-from fastapi import UploadFile, File, Form
+from fastapi import UploadFile, Form
 from fastapi.responses import StreamingResponse
 from ultralytics import YOLO
 from PIL import Image
 import io
-import numpy as np
+
 from utils import get_bytes_from_prediction
 
 car_detector = YOLO("./models/yolo11s.pt")
@@ -14,24 +14,6 @@ license_detector = YOLO("./models/yolo11s_20epochs_best.pt")
 router = APIRouter(
     prefix="/api/image",
 )
-
-# def get_bytes_from_prediction(prediction: np.ndarray,quality: int) -> bytes:
-#     """
-#     Convert YOLO's prediction to Bytes
-    
-#     Args:
-#     prediction (np.ndarray): A YOLO's prediction
-    
-#     Returns:
-#     bytes : BytesIO object that contains the image in JPEG format with quality 95
-#     """
-#     im_bgr = prediction[0].plot()
-#     im_rgb = im_bgr[...,::-1]
-#     return_image = Image.fromarray(im_rgb)
-#     return_bytes = io.BytesIO()
-#     return_image.save(return_bytes, format='JPEG', quality=quality)
-#     return_bytes.seek(0)
-#     return return_bytes
 
 @router.post("/car_detect")
 def image_car_detect(image: UploadFile,conf: float = Form(0.25)):
