@@ -8,4 +8,5 @@ License\ Plate\ Recognition.v4-resized640_aug3x-accurate.yolov11/
 coco/
 *.mp4
 *.jpg
+*.png
 __pycache__
