@@ -1,5 +1,7 @@
 inputs/
-*.pt
+tests/simple/*.pt
+inference/models/yolo11n.pt
+inference/models/yolo11s.pt
 *.zip
 License\ Plate\ Recognition.v4-resized640_aug3x-accurate.yolov11/
 .DS_Store
