@@ -34,15 +34,17 @@ router = APIRouter(
 #     return return_bytes
 
 @router.post("/car_detect")
-def image_car_detect(file: bytes = File(),conf: float = Form(0.25)):
+def image_car_detect(image: UploadFile,conf: float = Form(0.25)):
+    file = image.file.read()
     input_image = Image.open(io.BytesIO(file)).convert("RGB")
-    prediction = car_detector(input_image,conf=conf)
+    prediction = car_detector(input_image,conf=conf,classes=[2,5,7])
     return_bytes = get_bytes_from_prediction(prediction,quality=95)
 
     return StreamingResponse(content=return_bytes,media_type="image/jpeg")
 
 @router.post("/license_plate_detect")
-def image_license_plate_detect(file: bytes = File(),conf: float = Form(0.25)):
+def image_license_plate_detect(image: UploadFile,conf: float = Form(0.25)):
+    file = image.file.read()
     input_image = Image.open(io.BytesIO(file)).convert("RGB")
     prediction = license_detector(input_image,conf=conf)
     return_bytes = get_bytes_from_prediction(prediction,quality=95)
