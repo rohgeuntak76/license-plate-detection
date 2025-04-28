@@ -6,7 +6,7 @@ import cv2 as cv
 import numpy as np
 import io
 
-from utils import draw_border, crop_car_license_then_read, license_detect_number
+from utils.detector import draw_border, crop_car_license_then_read, license_detect_number
 
 router = APIRouter(
     prefix="/api/image/plate_number",

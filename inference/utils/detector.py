@@ -1,10 +1,10 @@
 from PIL import Image
 import io
 import numpy as np
-import string
 import cv2 as cv
 import easyocr
 from ultralytics import YOLO
+from utils.license_format import license_complies_format,format_license
 
 car_detector = YOLO("./models/yolo11s.pt")
 license_detector = YOLO("./models/yolo11s_20epochs_best.pt")
@@ -52,55 +52,6 @@ def get_bytes_from_prediction(prediction: np.ndarray,quality: int) -> bytes:
     return_image.save(return_bytes, format='JPEG', quality=quality)
     return_bytes.seek(0)
     return return_bytes
-
-dict_char_to_int = {'O': '0',
-                    'I': '1',
-                    'J': '3',
-                    'A': '4',
-                    'G': '6',
-                    'S': '5'}
-
-dict_int_to_char = {'0': 'O',
-                    '1': 'I',
-                    '3': 'J',
-                    '4': 'A',
-                    '6': 'G',
-                    '5': 'S'}
-
-def license_complies_format(text):
-    # True if the license plate complies with the format, False otherwise.
-    if len(text) != 7:
-        return False
-
-    if (text[0] in string.ascii_uppercase or text[0] in dict_int_to_char.keys()) and \
-       (text[1] in string.ascii_uppercase or text[1] in dict_int_to_char.keys()) and \
-       (text[2] in ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'] or text[2] in dict_char_to_int.keys()) and \
-       (text[3] in ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'] or text[3] in dict_char_to_int.keys()) and \
-       (text[4] in string.ascii_uppercase or text[4] in dict_int_to_char.keys()) and \
-       (text[5] in string.ascii_uppercase or text[5] in dict_int_to_char.keys()) and \
-       (text[6] in string.ascii_uppercase or text[6] in dict_int_to_char.keys()):
-        return True
-    else:
-        return False
-
-def format_license(text):
-    license_plate_ = ''
-    mapping = {
-        0: dict_int_to_char,
-        1: dict_int_to_char,
-        2: dict_char_to_int, 
-        3: dict_char_to_int,
-        4: dict_int_to_char, 
-        5: dict_int_to_char, 
-        6: dict_int_to_char
-    }
-    for j in [0, 1, 2, 3, 4, 5, 6]:
-        if text[j] in mapping[j].keys():
-            license_plate_ += mapping[j][text[j]]
-        else:
-            license_plate_ += text[j]
-
-    return license_plate_
 
 def read_license_plate(detections):
 

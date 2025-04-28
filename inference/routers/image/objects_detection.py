@@ -2,7 +2,7 @@ from fastapi import APIRouter
 from fastapi import UploadFile, Form
 from fastapi.responses import StreamingResponse
 
-from utils import car_detect_bytes,license_detect_bytes
+from utils.detector import car_detect_bytes,license_detect_bytes
 
 
 router = APIRouter(
