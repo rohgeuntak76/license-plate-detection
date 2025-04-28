@@ -3,7 +3,8 @@ from uvicorn import Server, Config
 from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
 
-from routers.image import image_detect
+from routers.image import objects_detection,plate_number_detection
+from routers.video import video_detect
 
 app = FastAPI()
 
@@ -12,7 +13,9 @@ app = FastAPI()
 async def redirect():
     return RedirectResponse("/docs")
 
-app.include_router(image_detect.router)
+app.include_router(objects_detection.router)
+app.include_router(plate_number_detection.router)
+app.include_router(video_detect.router)
 
 
 if __name__ == "__main__":
