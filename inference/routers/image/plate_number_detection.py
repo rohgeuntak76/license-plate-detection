@@ -68,9 +68,12 @@ def image_license_plate_detect(image: UploadFile):
         Image (BytesIO): Annotated Image with license number detection by Yolo
     """
     file = image.file.read()
+    # print(type(file))
+    # input_image = Image.open(io.BytesIO(file)).convert("RGB")
     image_np = np.frombuffer(file, np.uint8)
     input_image = cv.imdecode(image_np, cv.IMREAD_COLOR) 
     
+
     results = crop_car_license_then_read(input_image)
  
     for track_id in results[0].keys():
