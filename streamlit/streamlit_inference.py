@@ -216,14 +216,14 @@ class Inference:
                     video_path = response_json['video_path']
                     
                     ws = websocket.WebSocketApp(
-                        f"ws://localhost:8000/api/video/ws/car/{sess_id}",
+                        f"ws://localhost:8000/api/video/ws/license_plate/{sess_id}",
                         on_message=lambda ws, msg: self.display_frame(msg),
                         on_error=lambda ws, err: self.st.error(f"Error: {err}"),
                         on_close=lambda ws: self.st.info("Processing complete")
                     )
 
                     # Send video path to backend
-                    ws.on_open = lambda ws: ws.send(json.dumps({"video_path": video_path}))
+                    ws.on_open = lambda ws: ws.send(json.dumps({"video_path": video_path,"conf": self.conf}))
                     ws.run_forever()
                 
                     print("get video stream")
@@ -249,7 +249,7 @@ class Inference:
                     )
 
                     # Send video path to backend
-                    ws.on_open = lambda ws: ws.send(json.dumps({"video_path": video_path}))
+                    ws.on_open = lambda ws: ws.send(json.dumps({"video_path": video_path,"conf":self.conf}))
                     ws.run_forever()
                 
                     print("get video stream")
