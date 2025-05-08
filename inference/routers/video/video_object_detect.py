@@ -102,15 +102,6 @@ async def video_plate_number_detect(file: UploadFile,conf: float = Form(0.25)):
             os.remove(temp_path)
                         
 
-@router.post("/license_plate_detect")
-def video_license_plate_detect(image: UploadFile,conf: float = Form(0.25)):
-    file = image.file.read()
-    input_image = Image.open(io.BytesIO(file)).convert("RGB")
-    prediction = license_detector(input_image,conf=conf)
-    return_bytes = get_bytes_from_prediction(prediction,quality=95)
-
-    return StreamingResponse(content=return_bytes,media_type="image/jpeg")
-
 
 @router.post("/upload")
 async def upload_video(file: UploadFile):
