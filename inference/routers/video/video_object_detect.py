@@ -2,7 +2,6 @@ import os
 from fastapi import APIRouter
 from fastapi import UploadFile, Form
 from fastapi import WebSocket,WebSocketDisconnect,websockets
-from fastapi.responses import StreamingResponse
 from websockets.exceptions import InvalidState
 import uuid
 import asyncio
@@ -12,12 +11,12 @@ import cv2 as cv
 from PIL import Image
 import io
 import uuid
-import time
 from utils.detector import read_license_plate
 from utils.license_format import write_csv
 
 import easyocr
 from ultralytics import YOLO
+from utils.detector import car_detect_bytes,license_detect_bytes
 
 car_detector = YOLO("./models/yolo11s.pt")
 license_detector = YOLO("./models/yolo11s_20epochs_best.pt")
@@ -115,7 +114,50 @@ async def upload_video(file: UploadFile):
     return {"session_id": session_id, "video_path": temp_path}
 
 @router.websocket("/ws/car/{session_id}")
-async def process_video_ws(websocket: WebSocket, session_id: str):
+async def process_video_ws_car(websocket: WebSocket, session_id: str):
+    await websocket.accept()
+    
+    # Get video path from session data (simplified here)
+    data = await websocket.receive_json()
+    video_path = data["video_path"]
+    conf = data["conf"]
+    # Process video
+    cap = cv.VideoCapture(video_path)
+    fps = cap.get(cv.CAP_PROP_FPS)
+    frame_num = -1
+
+    try:
+        while cap.isOpened():
+            frame_num += 1
+            ret, frame = cap.read()
+            ### limit 10 frame for test purpose
+            if not ret or frame_num > 10:
+            # if not ret :
+                break
+            
+            return_bytes = car_detect_bytes(frame,conf,frame=True)
+            # # Send bytes 
+            if websocket.application_state != websockets.WebSocketState.DISCONNECTED:
+                await websocket.send_bytes(return_bytes)
+    
+            # Control processing rate to not overwhelm the connection
+            await asyncio.sleep(1/fps)
+    except (InvalidState,WebSocketDisconnect) as e:
+        print(f"{e}")
+    finally:
+        print(websocket.client_state)
+        print(websocket.application_state)
+        if websocket.application_state != websockets.WebSocketState.DISCONNECTED:
+            await websocket.close(reason="Normal closure")
+        else:
+            print("Connection is already closed!")
+        cap.release()
+        # Clean up temp file
+        if os.path.exists(video_path):
+            os.remove(video_path)
+
+@router.websocket("/ws/license_plate/{session_id}")
+async def process_video_ws_license_plate(websocket: WebSocket, session_id: str):
     await websocket.accept()
     
     # Get video path from session data (simplified here)
@@ -137,7 +179,7 @@ async def process_video_ws(websocket: WebSocket, session_id: str):
             
             frame_num += 1
             # Process frame - detect license plates
-            processed_frame = car_detector(frame)
+            processed_frame = license_detector(frame)
             im_bgr = processed_frame[0].plot()
             im_rgb = im_bgr[...,::-1]
             return_image = Image.fromarray(im_rgb)

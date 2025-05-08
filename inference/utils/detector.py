@@ -10,10 +10,13 @@ car_detector = YOLO("./models/yolo11s.pt")
 license_detector = YOLO("./models/yolo11s_20epochs_best.pt")
 plate_reader = easyocr.Reader(['en'],gpu=False)
 
-def car_detect_bytes(image,conf):
-    file = image.file.read()
-    image_np = np.frombuffer(file, np.uint8)
-    input_image = cv.imdecode(image_np, cv.IMREAD_COLOR)  # bytes -> numpy 
+def car_detect_bytes(image,conf: float = 0.25, frame: bool = False):
+    if frame:
+        input_image = image
+    else:
+        file = image.file.read()
+        image_np = np.frombuffer(file, np.uint8)
+        input_image = cv.imdecode(image_np, cv.IMREAD_COLOR)  # bytes -> numpy 
 
     prediction = car_detector(input_image,conf=conf,classes=[2,5,7])
     return_bytes = get_bytes_from_prediction(prediction,quality=95)

@@ -16,11 +16,12 @@ def image_car_detect(image: UploadFile,conf: float = Form(0.25)):
     
     Args:
         image : Car image
-        conf : confidence threshold
+        conf : confidence threshold (default : 0.25)
+        Frame : Boolean whether input is Frame or UploadFile (default : False)
     Returns:
         Image (BytesIO): Annotated Image with Car detection by Yolo
     """
-    return_bytes = car_detect_bytes(image,conf)
+    return_bytes = car_detect_bytes(image,conf,frame=False)
 
     return StreamingResponse(content=return_bytes,media_type="image/jpeg")
 
