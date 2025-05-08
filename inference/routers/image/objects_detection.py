@@ -36,6 +36,6 @@ def image_license_plate_detect(image: UploadFile,conf: float = Form(0.25)):
     Returns:
         Image (BytesIO): Annotated Image with license detection by Yolo
     """
-    return_bytes = license_detect_bytes(image,conf)
+    return_bytes = license_detect_bytes(image,conf,frame=False)
 
     return StreamingResponse(content=return_bytes,media_type="image/jpeg")

@@ -134,7 +134,7 @@ async def process_video_ws_car(websocket: WebSocket, session_id: str):
             if not ret or frame_num > 10:
             # if not ret :
                 break
-            
+
             return_bytes = car_detect_bytes(frame,conf,frame=True)
             # # Send bytes 
             if websocket.application_state != websockets.WebSocketState.DISCONNECTED:
@@ -163,6 +163,7 @@ async def process_video_ws_license_plate(websocket: WebSocket, session_id: str):
     # Get video path from session data (simplified here)
     data = await websocket.receive_json()
     video_path = data["video_path"]
+    conf = data["conf"]
     
     # Process video
     cap = cv.VideoCapture(video_path)
@@ -179,13 +180,7 @@ async def process_video_ws_license_plate(websocket: WebSocket, session_id: str):
             
             frame_num += 1
             # Process frame - detect license plates
-            processed_frame = license_detector(frame)
-            im_bgr = processed_frame[0].plot()
-            im_rgb = im_bgr[...,::-1]
-            return_image = Image.fromarray(im_rgb)
-            return_bytes = io.BytesIO()
-            return_image.save(return_bytes, format='JPEG', quality=95)
-            return_bytes.seek(0)
+            return_bytes = license_detect_bytes(frame,conf,frame=True)
             # # Convert frame to bytes and send
             if websocket.application_state != websockets.WebSocketState.DISCONNECTED:
                 await websocket.send_bytes(return_bytes)

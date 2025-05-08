@@ -22,10 +22,13 @@ def car_detect_bytes(image,conf: float = 0.25, frame: bool = False):
     return_bytes = get_bytes_from_prediction(prediction,quality=95)
     return return_bytes
 
-def license_detect_bytes(image,conf):
-    file = image.file.read()
-    image_np = np.frombuffer(file, np.uint8)
-    input_image = cv.imdecode(image_np, cv.IMREAD_COLOR) 
+def license_detect_bytes(image,conf: float = 0.25, frame: bool = False):
+    if frame:
+        input_image = image
+    else:
+        file = image.file.read()
+        image_np = np.frombuffer(file, np.uint8)
+        input_image = cv.imdecode(image_np, cv.IMREAD_COLOR) 
     
     prediction = license_detector(input_image,conf=conf)
     return_bytes = get_bytes_from_prediction(prediction,quality=95)
