@@ -1,0 +1,22 @@
+import requests
+
+url = "http://localhost:8000/api/image/cars/detect/annotated"
+
+file_path = './car_image.jpg'
+
+data = open(file_path,'rb')
+
+files = {
+    'image': ("car_image.jpg", data, 'image/jpeg'),
+}
+data = {
+    'conf': '0.25'
+}
+headers = {
+    'accept': 'application/json',
+    'Content-Type': 'multipart/form-data',
+}
+response = requests.post(url,files=files,data=data)
+print(response.status_code)
+response_json = response.json()
+print(response_json)
