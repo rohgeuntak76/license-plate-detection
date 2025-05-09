@@ -9,6 +9,7 @@ from utils.license_format import license_complies_format,format_license
 car_detector = YOLO("./models/yolo11s.pt")
 license_detector = YOLO("./models/yolo11s_20epochs_best.pt")
 plate_reader = easyocr.Reader(['en'],gpu=False)
+vehicles_id = [2,3,5,7]
 
 def car_detect_bytes(image,conf: float = 0.25, frame: bool = False):
     if frame:
@@ -90,10 +91,10 @@ def draw_border(img, top_left, bottom_right, color=(0, 255, 0), thickness=6, lin
 
     return img
 
-def crop_car_license_then_read(input_image):
-    results = {}
-    results[0] = {}
-    car_results = car_detector.track(input_image, persist=True,conf=0.5,classes=[2,5,7])[0]
+def crop_car_license_then_read(input_image,car_conf: float = 0.25,license_conf: float = 0.25):
+    frame_results = {}
+
+    car_results = car_detector.track(input_image, persist=True,conf=car_conf,classes=vehicles_id)[0]
     for car_result in car_results.boxes.data.tolist():
         x1, y1, x2, y2, track_id, score, class_id = car_result
         # print(f"{track_id},{class_id}")
@@ -101,7 +102,7 @@ def crop_car_license_then_read(input_image):
         vehicle_bounding_boxes.append([x1, y1, x2, y2, track_id, score])
         for bbox in vehicle_bounding_boxes: 
             roi = input_image[int(y1):int(y2), int(x1):int(x2)] # crop the vehicle
-            license_plates = license_detector(roi,conf=0.5)[0]
+            license_plates = license_detector(roi,conf=license_conf)[0]
             for license_plate in license_plates.boxes.data.tolist():
                 print(track_id)
                 plate_x1, plate_y1, plate_x2, plate_y2, plate_score, _ = license_plate
@@ -114,7 +115,8 @@ def crop_car_license_then_read(input_image):
                 _, plate_treshold = cv.threshold(plate_gray, 64, 255, cv.THRESH_BINARY_INV)
                 ocr_detections = plate_reader.readtext(plate_treshold)
                 lic_text, lic_score = read_license_plate(ocr_detections)
-                results[0][track_id] = {
+                # results[frame_nmr][track_id] = {
+                frame_results[track_id] = {
                             'car': {
                                 'bbox': [x1, y1, x2, y2],
                                 'bbox_score': score
@@ -126,5 +128,5 @@ def crop_car_license_then_read(input_image):
                                 'text_score': lic_score
                             }
                 } 
-
-    return results
+    car_detector.predictor.trackers[0].reset()
+    return frame_results

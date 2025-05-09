@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from fastapi import UploadFile
+from fastapi import UploadFile, Form
 from fastapi.responses import StreamingResponse
 from PIL import Image
 import cv2 as cv
@@ -29,7 +29,7 @@ def image_license_plate_detect(image: UploadFile):
 
 
 @router.post("/crop/detect/info", tags=["Plate Number Detection"])
-def image_license_plate_detect(image: UploadFile):
+def image_license_plate_detect(image: UploadFile,car_conf: float = Form(0.25),license_conf: float = Form(0.25)):
     """
     Get Car Image -> Crop car -> Crop license plate -> Read Plate Number ( OCR ) -> Return Dict
     
@@ -52,7 +52,7 @@ def image_license_plate_detect(image: UploadFile):
     image_np = np.frombuffer(file, np.uint8)
     input_image = cv.imdecode(image_np, cv.IMREAD_COLOR) 
 
-    results = crop_car_license_then_read(input_image)
+    results = crop_car_license_then_read(input_image,car_conf,license_conf)
 
     return results
 
@@ -74,7 +74,7 @@ def image_license_plate_detect(image: UploadFile):
     input_image = cv.imdecode(image_np, cv.IMREAD_COLOR) 
     
 
-    results = crop_car_license_then_read(input_image)
+    results = crop_car_license_then_read(input_image,0)
  
     for track_id in results[0].keys():
         vhcl_x1, vhcl_y1, vhcl_x2, vhcl_y2 = results[0][track_id]['car']['bbox']

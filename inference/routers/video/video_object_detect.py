@@ -11,87 +11,43 @@ import cv2 as cv
 from PIL import Image
 import io
 import uuid
-from utils.detector import read_license_plate
-from utils.license_format import write_csv
 
 import easyocr
 from ultralytics import YOLO
-from utils.detector import car_detect_bytes,license_detect_bytes
 
-car_detector = YOLO("./models/yolo11s.pt")
-license_detector = YOLO("./models/yolo11s_20epochs_best.pt")
-plate_reader = easyocr.Reader(['en'],gpu=False)
+from utils.license_format import write_csv
+from utils.detector import car_detect_bytes,license_detect_bytes, crop_car_license_then_read
+# from utils.detector import read_license_plate
+# from utils.detector import car_tracker_numpy,license_detect_numpy
+
+# car_detector = YOLO("./models/yolo11s.pt")
+# license_detector = YOLO("./models/yolo11s_20epochs_best.pt")
+# plate_reader = easyocr.Reader(['en'],gpu=False)
 
 router = APIRouter(
     prefix="/api/video",
 )   
 
-@router.post("/plate_number/crop/detect/csv",tags=["Plate Number Detection"])
-async def video_plate_number_detect(file: UploadFile,conf: float = Form(0.25)):
+@router.post("/plate_number/crop/detect/info",tags=["Plate Number Detection"])
+async def video_plate_number_detect(file: UploadFile,car_conf: float = Form(0.25),license_conf: float = Form(0.25)):
     temp_path = f"temp_{uuid.uuid4()}.mp4"
-    # input = file.read()
     with open(temp_path,"wb") as buffer:
-        # buffer.write(input)
         buffer.write(await file.read())
     
     video = cv.VideoCapture(temp_path)
     fps = video.get(cv.CAP_PROP_FPS)
     print(fps)
     frame_nmr = -1
-    vehicles = [2,3,5]
-    CAR_SCORE_THRESHOLD = 0.5
-    LICENSE_SCORE_THRESHOLD = 0.5
     
     results = {}
     try:
         while video.isOpened():
             frame_nmr += 1
             success, frame = video.read()
-            print(frame_nmr)
+            # print(frame_nmr)
             # if success:
-            if success:
-                results[frame_nmr] = {}
-
-                car_results = car_detector.track(frame, persist=True,conf=CAR_SCORE_THRESHOLD)[0]
-                for car_result in car_results.boxes.data.tolist():
-                    x1, y1, x2, y2, track_id, score, class_id = car_result
-                    if int(class_id) in vehicles:
-                        vehicle_bounding_boxes = []
-                        vehicle_bounding_boxes.append([x1, y1, x2, y2, track_id, score])
-                        for bbox in vehicle_bounding_boxes:
-                            roi = frame[int(y1):int(y2), int(x1):int(x2)] # crop the vehicle
-                            # license plate detector for region of interest
-                            license_plates = license_detector(roi,conf=LICENSE_SCORE_THRESHOLD)[0]
-        
-                            # check every bounding box for a license plate
-                            for license_plate in license_plates.boxes.data.tolist():
-                                plate_x1, plate_y1, plate_x2, plate_y2, plate_score, _ = license_plate
-
-                                # crop license plate
-                                plate = roi[int(plate_y1):int(plate_y2), int(plate_x1):int(plate_x2)]
-                                # de-colorize
-                                plate_gray = cv.cvtColor(plate, cv.COLOR_BGR2GRAY)
-                                # posterize
-                                _, plate_treshold = cv.threshold(plate_gray, 64, 255, cv.THRESH_BINARY_INV)
-                                ocr_detections = plate_reader.readtext(plate_treshold)
-
-                                # OCR
-                                lic_text, lic_score = read_license_plate(ocr_detections)
-                                # if plate could be read write results
-                                # if lic_text is not None:
-
-                                results[frame_nmr][track_id] = {
-                                    'car': {
-                                        'bbox': [x1, y1, x2, y2],
-                                        'bbox_score': score
-                                    },
-                                    'license_plate': {
-                                        'bbox': [plate_x1 , plate_y1, plate_x2, plate_y2],
-                                        'bbox_score': plate_score,
-                                        'number': lic_text,
-                                        'text_score': lic_score
-                                    }
-                                }
+            if success and frame_nmr < 10:
+                results[frame_nmr] = crop_car_license_then_read(frame,car_conf,license_conf)
             else:
                 break
     finally:
@@ -102,7 +58,7 @@ async def video_plate_number_detect(file: UploadFile,conf: float = Form(0.25)):
                         
 
 
-@router.post("/upload")
+@router.post("/upload",tags=['Utils'])
 async def upload_video(file: UploadFile):
     # Save uploaded video temporarily
     temp_path = f"temp_{uuid.uuid4()}.mp4"

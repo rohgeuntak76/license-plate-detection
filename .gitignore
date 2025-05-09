@@ -10,3 +10,4 @@ coco/
 *.jpg
 *.png
 __pycache__
+*.csv*
