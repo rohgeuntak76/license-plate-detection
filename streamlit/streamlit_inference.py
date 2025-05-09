@@ -69,6 +69,7 @@ class Inference:
         self.selected_ind = []  # List of selected class indices for detection
         self.selected_classes = []
         self.model = None  # YOLO model instance
+        self.usecase = None
 
         self.temp_dict = {"model": None, **kwargs}
         self.model_dir = None
@@ -97,18 +98,53 @@ class Inference:
         self.st.markdown(main_title_cfg, unsafe_allow_html=True)
         self.st.markdown(sub_title_cfg, unsafe_allow_html=True)
 
-    def sidebar(self):
-        """Configure the Streamlit sidebar for model and inference settings."""
+    def usecase_sidebar(self):
         with self.st.sidebar:  # Add Ultralytics LOGO
             logo = "https://raw.githubusercontent.com/ultralytics/assets/main/logo/Ultralytics_Logotype_Original.svg"
             self.st.image(logo, width=250)
 
-        self.st.sidebar.title("User Configuration")  # Add elements to vertical setting menu
+        self.st.sidebar.title("Use Case")  # Add elements to vertical setting menu
+        self.usecase = self.st.sidebar.selectbox(
+            "Select Use Case",
+            ("Vehicle Detection", "License Number Detection"),
+        )
+    
+    def license_sidebar(self):
+        """Configure the Streamlit sidebar for model and inference settings."""
+        # with self.st.sidebar:  # Add Ultralytics LOGO
+        #     logo = "https://raw.githubusercontent.com/ultralytics/assets/main/logo/Ultralytics_Logotype_Original.svg"
+        #     self.st.image(logo, width=250)
+
+        self.st.sidebar.title("Configuration")  # Add elements to vertical setting menu
         self.source = self.st.sidebar.selectbox(
             "Data Type",
             ("Image", "Video"),
         )  # Add source selection dropdown
-        self.enable_trk = self.st.sidebar.radio("Enable Tracking", ("Yes", "No"))  # Enable object tracking
+        
+        self.conf = float(
+            self.st.sidebar.slider("Car Confidence Threshold", 0.0, 1.0, self.conf, 0.01)
+        )
+        self.conf = float(
+            self.st.sidebar.slider("License Confidence Threshold", 0.0, 1.0, self.conf, 0.01)
+        )  # Slider for confidence
+        # self.iou = float(self.st.sidebar.slider("IoU Threshold", 0.0, 1.0, self.iou, 0.01))  # Slider for NMS threshold
+
+        col1, col2 = self.st.columns(2)  # Create two columns for displaying frames
+        self.org_frame = col1.empty()  # Container for original frame
+        self.ann_frame = col2.empty()  # Container for annotated frame
+
+    def vehicle_sidebar(self):
+        """Configure the Streamlit sidebar for model and inference settings."""
+        # with self.st.sidebar:  # Add Ultralytics LOGO
+        #     logo = "https://raw.githubusercontent.com/ultralytics/assets/main/logo/Ultralytics_Logotype_Original.svg"
+        #     self.st.image(logo, width=250)
+
+        self.st.sidebar.title("Configuration")  # Add elements to vertical setting menu
+        self.source = self.st.sidebar.selectbox(
+            "Data Type",
+            ("Image", "Video"),
+        )  # Add source selection dropdown
+        # self.enable_trk = self.st.sidebar.radio("Enable Tracking", ("Yes", "No"))  # Enable object tracking
         self.conf = float(
             self.st.sidebar.slider("Confidence Threshold", 0.0, 1.0, self.conf, 0.01)
         )  # Slider for confidence
@@ -129,11 +165,32 @@ class Inference:
             self.vid_file = self.st.sidebar.file_uploader("Upload Image File", type=["jpeg", "png"])
             if self.vid_file is not None:
                 self.org_frame.image(self.vid_file)
-            
-        # if self.vid_file is not None:
-        #     self.file_bytes = io.BytesIO(self.vid_file.read())  # BytesIO Object
 
-    def configure(self):
+    def license_configure(self):
+        """Configure the model and load selected classes for inference."""
+        # Add dropdown menu for model selection
+        car_detectors = ["Yolo11s"]
+        license_detectors = ["Yolo11s_20epochs_best"]
+        car_selected_model = self.st.sidebar.selectbox("Car Detector", car_detectors)
+        license_selected_model = self.st.sidebar.selectbox("License Plate Detector", license_detectors)
+
+        # with self.st.spinner("Model is downloading..."):
+        #     self.model_dir = "../inference/models"
+        #     self.model = YOLO(f"{self.model_dir}/{car_selected_model.lower()}.pt")  # Load the YOLO model
+        #     class_names = list(self.model.names.values())  # Convert dictionary to list of class names
+        #     self.model_load = self.st.success("Model loaded successfully!")
+        
+        # # Multiselect box with class names and get indices of selected classes
+        # if len(class_names) > 1:
+        #     self.selected_classes = self.st.sidebar.multiselect("Classes", class_names, default=[class_names[i] for i in [2,3,5,7]])   
+        # else:
+        #     self.selected_classes = self.st.sidebar.multiselect("Classes", class_names, default=class_names[:3])
+        # self.selected_ind = [class_names.index(option) for option in self.selected_classes]
+
+        # if not isinstance(self.selected_ind, list):  # Ensure selected_options is a list
+        #     self.selected_ind = list(self.selected_ind)
+
+    def car_configure(self):
         """Configure the model and load selected classes for inference."""
         # Add dropdown menu for model selection
         available_models = ["Yolo11s","Yolo11s_20epochs_best"]
@@ -168,92 +225,142 @@ class Inference:
     def inference(self):
         """Perform real-time object detection inference on video or webcam feed."""
         self.web_ui()  # Initialize the web interface
-        self.sidebar()  # Create the sidebar
-        self.source_upload()  # Upload the video source
-        self.configure()  # Configure the app
-        if self.st.sidebar.button("Start"):
-            self.model_load.empty()   
-            stop_button = self.st.button("Stop")  # Button to stop the inference
-            if self.source == "Image":
-                print(self.selected_classes)
-                if self.selected_classes[0] == 'License_Plate':
-                    url = "http://localhost:8000/api/image/plates/detect/annotated"
-                    files = {
-                        'image': (self.vid_file.name, self.vid_file.getvalue(), 'image/jpeg'),
-                    }
-                    data = {
-                        'conf': f'{self.conf}'
-                    }
-                    response = requests.post(url,files=files,data=data,stream=True)
-                    annotated_result = io.BytesIO(response.content)
+        self.usecase_sidebar()
+        if self.usecase == "Vehicle Detection" :
+            self.vehicle_sidebar()  # Create the sidebar
+            self.source_upload()  # Upload the video source
+            self.car_configure()  # Configure the app
+            if self.st.sidebar.button("Start"):
+                self.model_load.empty()   
+                stop_button = self.st.button("Stop")  # Button to stop the inference
+                if self.source == "Image":
+                    print(self.selected_classes)
+                    if self.selected_classes[0] == 'License_Plate':
+                        url = "http://localhost:8000/api/image/plates/detect/annotated"
+                        files = {
+                            'image': (self.vid_file.name, self.vid_file.getvalue(), 'image/jpeg'),
+                        }
+                        data = {
+                            'conf': f'{self.conf}'
+                        }
+                        response = requests.post(url,files=files,data=data,stream=True)
+                        annotated_result = io.BytesIO(response.content)
 
-                    self.ann_frame.image(annotated_result)
-                else:
-                    url = "http://localhost:8000/api/image/cars/detect/annotated"
-                    files = {
-                        'image': (self.vid_file.name, self.vid_file.getvalue(), 'image/jpeg'),
-                    }
-                    data = {
-                        'conf': f'{self.conf}'
-                    }
-                    response = requests.post(url,files=files,data=data,stream=True)
-                    annotated_result = io.BytesIO(response.content)
+                        self.ann_frame.image(annotated_result)
+                    else:
+                        url = "http://localhost:8000/api/image/cars/detect/annotated"
+                        files = {
+                            'image': (self.vid_file.name, self.vid_file.getvalue(), 'image/jpeg'),
+                        }
+                        data = {
+                            'conf': f'{self.conf}'
+                        }
+                        response = requests.post(url,files=files,data=data,stream=True)
+                        annotated_result = io.BytesIO(response.content)
 
-                    self.ann_frame.image(annotated_result)
-            elif self.source == "Video":
-                if self.selected_classes[0] == 'License_Plate':
-                    import websocket
-                    url = "http://localhost:8000/api/video/upload"
-                    files = {
-                        'file': (self.vid_file.name, self.vid_file.getvalue(), 'video/mp4')
-                    }
-                    data = {
-                        'conf': f'{self.conf}'
-                    }
-                    response = requests.post(url,files=files)
-                    response_json = response.json()
-                    sess_id = response_json['session_id']
-                    video_path = response_json['video_path']
+                        self.ann_frame.image(annotated_result)
+                elif self.source == "Video":
+                    if self.selected_classes[0] == 'License_Plate':
+                        import websocket
+                        url = "http://localhost:8000/api/video/upload"
+                        files = {
+                            'file': (self.vid_file.name, self.vid_file.getvalue(), 'video/mp4')
+                        }
+                        data = {
+                            'conf': f'{self.conf}'
+                        }
+                        response = requests.post(url,files=files)
+                        response_json = response.json()
+                        sess_id = response_json['session_id']
+                        video_path = response_json['video_path']
+                        
+                        ws = websocket.WebSocketApp(
+                            f"ws://localhost:8000/api/video/ws/license_plate/{sess_id}",
+                            on_message=lambda ws, msg: self.display_frame(msg),
+                            on_error=lambda ws, err: self.st.error(f"Error: {err}"),
+                            on_close=lambda ws: self.st.info("Processing complete")
+                        )
+
+                        # Send video path to backend
+                        ws.on_open = lambda ws: ws.send(json.dumps({"video_path": video_path,"conf": self.conf}))
+                        ws.run_forever()
                     
-                    ws = websocket.WebSocketApp(
-                        f"ws://localhost:8000/api/video/ws/license_plate/{sess_id}",
-                        on_message=lambda ws, msg: self.display_frame(msg),
-                        on_error=lambda ws, err: self.st.error(f"Error: {err}"),
-                        on_close=lambda ws: self.st.info("Processing complete")
-                    )
+                        print("get video stream")
+                    else:
+                        import websocket
+                        url = "http://localhost:8000/api/video/upload"
+                        files = {
+                            'file': (self.vid_file.name, self.vid_file.getvalue(), 'video/mp4')
+                        }
+                        data = {
+                            'conf': f'{self.conf}'
+                        }
+                        response = requests.post(url,files=files)
+                        response_json = response.json()
+                        sess_id = response_json['session_id']
+                        video_path = response_json['video_path']
+                        
+                        ws = websocket.WebSocketApp(
+                            f"ws://localhost:8000/api/video/ws/car/{sess_id}",
+                            on_message=lambda ws, msg: self.display_frame(msg),
+                            on_error=lambda ws, err: self.st.error(f"Error: {err}"),
+                            on_close=lambda ws: self.st.info("Processing complete")
+                        )
 
-                    # Send video path to backend
-                    ws.on_open = lambda ws: ws.send(json.dumps({"video_path": video_path,"conf": self.conf}))
-                    ws.run_forever()
-                
-                    print("get video stream")
-                else:
-                    import websocket
-                    url = "http://localhost:8000/api/video/upload"
-                    files = {
-                        'file': (self.vid_file.name, self.vid_file.getvalue(), 'video/mp4')
-                    }
-                    data = {
-                        'conf': f'{self.conf}'
-                    }
-                    response = requests.post(url,files=files)
-                    response_json = response.json()
-                    sess_id = response_json['session_id']
-                    video_path = response_json['video_path']
+                        # Send video path to backend
+                        ws.on_open = lambda ws: ws.send(json.dumps({"video_path": video_path,"conf":self.conf}))
+                        ws.run_forever()
                     
-                    ws = websocket.WebSocketApp(
-                        f"ws://localhost:8000/api/video/ws/car/{sess_id}",
-                        on_message=lambda ws, msg: self.display_frame(msg),
-                        on_error=lambda ws, err: self.st.error(f"Error: {err}"),
-                        on_close=lambda ws: self.st.info("Processing complete")
-                    )
+                        print("get video stream")
+        elif self.usecase == 'License Number Detection':
+            self.license_sidebar()
+            self.source_upload()
+            self.license_configure()
+            if self.st.sidebar.button("Start"):
+                # self.model_load.empty()   
+                stop_button = self.st.button("Stop")  # Button to stop the inference
+                if self.source == "Image":
+                    pass
+                    # url = "http://localhost:8000/api/image/plates/detect/annotated"
+                    # files = {
+                    #     'image': (self.vid_file.name, self.vid_file.getvalue(), 'image/jpeg'),
+                    # }
+                    # data = {
+                    #     'conf': f'{self.conf}'
+                    # }
+                    # response = requests.post(url,files=files,data=data,stream=True)
+                    # annotated_result = io.BytesIO(response.content)
 
-                    # Send video path to backend
-                    ws.on_open = lambda ws: ws.send(json.dumps({"video_path": video_path,"conf":self.conf}))
-                    ws.run_forever()
+                    # self.ann_frame.image(annotated_result)
+                    
+                elif self.source == "Video":
+                    pass
+                    # import websocket
+                    # url = "http://localhost:8000/api/video/upload"
+                    # files = {
+                    #     'file': (self.vid_file.name, self.vid_file.getvalue(), 'video/mp4')
+                    # }
+                    # data = {
+                    #     'conf': f'{self.conf}'
+                    # }
+                    # response = requests.post(url,files=files)
+                    # response_json = response.json()
+                    # sess_id = response_json['session_id']
+                    # video_path = response_json['video_path']
+                    
+                    # ws = websocket.WebSocketApp(
+                    #     f"ws://localhost:8000/api/video/ws/license_plate/{sess_id}",
+                    #     on_message=lambda ws, msg: self.display_frame(msg),
+                    #     on_error=lambda ws, err: self.st.error(f"Error: {err}"),
+                    #     on_close=lambda ws: self.st.info("Processing complete")
+                    # )
+
+                    # # Send video path to backend
+                    # ws.on_open = lambda ws: ws.send(json.dumps({"video_path": video_path,"conf": self.conf}))
+                    # ws.run_forever()
                 
-                    print("get video stream")
-
+                    # print("get video stream")
+                    
 
 if __name__ == "__main__":
     import sys  # Import the sys module for accessing command-line arguments
