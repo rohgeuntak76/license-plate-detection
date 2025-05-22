@@ -12,6 +12,9 @@ from ultralytics.utils.downloads import GITHUB_ASSETS_STEMS
 
 import requests
 import json
+import pandas as pd
+
+api_host = "localhost:8000"
 
 class Inference:
     """
@@ -60,6 +63,8 @@ class Inference:
         self.source = None  # Video source selection (webcam or video file)
         self.enable_trk = False  # Flag to toggle object tracking
         self.conf = 0.25  # Confidence threshold for detection
+        self.car_conf = 0.25
+        self.license_conf = 0.25
         self.iou = 0.45  # Intersection-over-Union (IoU) threshold for non-maximum suppression
         self.org_frame = None  # Container for the original frame display
         self.ann_frame = None  # Container for the annotated frame display
@@ -70,12 +75,15 @@ class Inference:
         self.selected_classes = []
         self.model = None  # YOLO model instance
         self.usecase = None
-
+        self.api_host = api_host
         self.temp_dict = {"model": None, **kwargs}
         self.model_dir = None
         self.model_path = None  # Model file path
         if self.temp_dict["model"] is not None:
             self.model_path = self.temp_dict["model"]
+        
+        if 'stage' not in st.session_state:
+            st.session_state.stage = 0
 
         LOGGER.info(f"Ultralytics Solutions: ✅ {self.temp_dict}")
 
@@ -121,10 +129,10 @@ class Inference:
             ("Image", "Video"),
         )  # Add source selection dropdown
         
-        self.conf = float(
+        self.car_conf = float(
             self.st.sidebar.slider("Car Confidence Threshold", 0.0, 1.0, self.conf, 0.01)
         )
-        self.conf = float(
+        self.license_conf = float(
             self.st.sidebar.slider("License Confidence Threshold", 0.0, 1.0, self.conf, 0.01)
         )  # Slider for confidence
         # self.iou = float(self.st.sidebar.slider("IoU Threshold", 0.0, 1.0, self.iou, 0.01))  # Slider for NMS threshold
@@ -222,6 +230,9 @@ class Inference:
         self.ann_frame.image(image)
         # self.org_frame.image(image)
 
+    def set_state(self,i):
+        self.st.session_state.stage = i
+
     def inference(self):
         """Perform real-time object detection inference on video or webcam feed."""
         self.web_ui()  # Initialize the web interface
@@ -230,13 +241,15 @@ class Inference:
             self.vehicle_sidebar()  # Create the sidebar
             self.source_upload()  # Upload the video source
             self.car_configure()  # Configure the app
-            if self.st.sidebar.button("Start"):
+            side_left, side_right = self.st.sidebar.columns(2)
+
+            if side_left.button("Start",use_container_width=True):
                 self.model_load.empty()   
-                stop_button = self.st.button("Stop")  # Button to stop the inference
+                stop_button = side_right.button("Clear",use_container_width=True)  # Button to stop the inference
                 if self.source == "Image":
                     print(self.selected_classes)
                     if self.selected_classes[0] == 'License_Plate':
-                        url = "http://localhost:8000/api/image/plates/detect/annotated"
+                        url = "http://" + api_host + "/api/image/plates/detect/annotated"
                         files = {
                             'image': (self.vid_file.name, self.vid_file.getvalue(), 'image/jpeg'),
                         }
@@ -248,7 +261,7 @@ class Inference:
 
                         self.ann_frame.image(annotated_result)
                     else:
-                        url = "http://localhost:8000/api/image/cars/detect/annotated"
+                        url = "http://" + api_host + "/api/image/cars/detect/annotated"
                         files = {
                             'image': (self.vid_file.name, self.vid_file.getvalue(), 'image/jpeg'),
                         }
@@ -262,7 +275,7 @@ class Inference:
                 elif self.source == "Video":
                     if self.selected_classes[0] == 'License_Plate':
                         import websocket
-                        url = "http://localhost:8000/api/video/upload"
+                        url = "http://" + api_host + "/api/video/upload"
                         files = {
                             'file': (self.vid_file.name, self.vid_file.getvalue(), 'video/mp4')
                         }
@@ -288,7 +301,7 @@ class Inference:
                         print("get video stream")
                     else:
                         import websocket
-                        url = "http://localhost:8000/api/video/upload"
+                        url = "http://" + api_host + "/api/utils/video/upload"
                         files = {
                             'file': (self.vid_file.name, self.vid_file.getvalue(), 'video/mp4')
                         }
@@ -301,7 +314,7 @@ class Inference:
                         video_path = response_json['video_path']
                         
                         ws = websocket.WebSocketApp(
-                            f"ws://localhost:8000/api/video/ws/car/{sess_id}",
+                            f"ws://{self.api_host}/api/video/ws/car/{sess_id}",
                             on_message=lambda ws, msg: self.display_frame(msg),
                             on_error=lambda ws, err: self.st.error(f"Error: {err}"),
                             on_close=lambda ws: self.st.info("Processing complete")
@@ -316,23 +329,47 @@ class Inference:
             self.license_sidebar()
             self.source_upload()
             self.license_configure()
-            if self.st.sidebar.button("Start"):
-                # self.model_load.empty()   
-                stop_button = self.st.button("Stop")  # Button to stop the inference
+            print(self.st.session_state)
+            if self.st.session_state.stage == 0:
+                left.button("Start",on_click=self.set_state, args=[1])
+                right.button("Clear",on_click=self.set_state, args=[0])
+            # if left.button("Start",use_container_width=True):
+            if self.st.session_state.stage == 1:
+                left.button("Start",on_click=self.set_state, args=[1])
+                right.button("Clear",on_click=self.set_state, args=[0])
+                # stop_button = right.button("Clear",use_container_width=True)  # Button to stop the inference
                 if self.source == "Image":
-                    pass
-                    # url = "http://localhost:8000/api/image/plates/detect/annotated"
-                    # files = {
-                    #     'image': (self.vid_file.name, self.vid_file.getvalue(), 'image/jpeg'),
-                    # }
-                    # data = {
-                    #     'conf': f'{self.conf}'
-                    # }
+                    # url = "http://" + api_host + "/api/image/plate_number/crop/detect/annotated"
+                    files = {
+                        'image': (self.vid_file.name, self.vid_file.getvalue(), 'image/jpeg'),
+                    }
+                    data = {
+                        'car_conf': f'{self.car_conf}',
+                        'license_conf': f'{self.license_conf}',
+                    }
                     # response = requests.post(url,files=files,data=data,stream=True)
                     # annotated_result = io.BytesIO(response.content)
-
                     # self.ann_frame.image(annotated_result)
+
+                    info_url = url = "http://" + api_host + "/api/image/plate_number/crop/detect/info"
+                    response_info = requests.post(info_url,files=files,data=data)
+                    response_info_json = response_info.json()
+                    print(response_info_json)
+                    # reframed_result = []
+                    # for track_id, data in response_info.json().items():
+                    #     new_row = {'frame_number':0,'track_id':track_id}
+                    #     new_row.update(data)
+                    #     reframed_result.append(new_row)
                     
+                    # response_info_df = pd.DataFrame(reframed_result,columns=['frame_number','track_id','car_bbox','car_bbox_score','lp_bbox','lp_bbox_score','lp_number','lp_text_score'])
+
+                    self.st.session_state.detection_result = response_info_json
+                    # self.st.dataframe(response_info_df)
+                    # self.st.dataframe(reframed_result)
+                    self.st.dataframe(response_info_json)
+                    self.st.button("Visualize",on_click=self.set_state, args=[2])
+                    # if self.st.button("Visualize"):
+                    #     pass
                 elif self.source == "Video":
                     pass
                     # import websocket
@@ -360,6 +397,23 @@ class Inference:
                     # ws.run_forever()
                 
                     # print("get video stream")
+            if self.st.session_state.stage == 2:
+                left.button("Start",on_click=self.set_state, args=[1])
+                right.button("Clear",on_click=self.set_state, args=[0])
+                files = {
+                    'image': (self.vid_file.name, self.vid_file.getvalue(), 'image/jpeg'),
+                }
+                data = {
+                    'item_json': json.dumps(self.st.session_state.detection_result),
+                }
+
+                url = 'http://' + api_host + '/api/utils/draw/annotated'
+                response = requests.post(url,files=files,data=data,stream=True)
+                annotated_result = io.BytesIO(response.content)
+
+                self.ann_frame.image(annotated_result)
+                self.st.dataframe(self.st.session_state.detection_result)
+                self.st.button("Visualize",on_click=self.set_state, args=[2])
                     
 
 if __name__ == "__main__":
