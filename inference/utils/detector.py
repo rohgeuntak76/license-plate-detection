@@ -7,31 +7,43 @@ from ultralytics import YOLO
 from utils.license_format import license_complies_format,format_license
 
 car_detector = YOLO("./models/yolo11s.pt")
+car_tracker = YOLO("./models/yolo11s.pt")
 license_detector = YOLO("./models/yolo11s_20epochs_best.pt")
 plate_reader = easyocr.Reader(['en'],gpu=False)
 vehicles_id = [2,3,5,7]
 
-def car_detect_bytes(image,conf: float = 0.25, frame: bool = False):
-    if frame:
-        input_image = image
-    else:
-        file = image.file.read()
-        image_np = np.frombuffer(file, np.uint8)
-        input_image = cv.imdecode(image_np, cv.IMREAD_COLOR)  # bytes -> numpy 
+def car_detect_bytes(image,conf: float = 0.25):
+    # if frame:
+    #     input_image = image
+    # else:
+    #     file = image.file.read()
+    #     image_np = np.frombuffer(file, np.uint8)
+    #     input_image = cv.imdecode(image_np, cv.IMREAD_COLOR)  # bytes -> numpy 
 
-    prediction = car_detector(input_image,conf=conf,classes=[2,5,7])
+    # input_image = image
+    if getattr(car_detector,'predictor',None) is not None:
+        print('Yolo have Predictor!!!!')
+        if getattr(car_detector.predictor,'trackers',None) is not None:
+            # delattr(car_detector.predictor,'trackers')
+            # print('Tracker attr was deleted!')
+            print('Tracker does exist!!')
+        else:
+            print("Tracker does not exists!!!!")
+    else:
+        print("Yolo does not have Predictor!!!")
+    prediction = car_detector(image,conf=conf,classes=vehicles_id)
     return_bytes = get_bytes_from_prediction(prediction,quality=95)
     return return_bytes
 
-def license_detect_bytes(image,conf: float = 0.25, frame: bool = False):
-    if frame:
-        input_image = image
-    else:
-        file = image.file.read()
-        image_np = np.frombuffer(file, np.uint8)
-        input_image = cv.imdecode(image_np, cv.IMREAD_COLOR) 
+def license_detect_bytes(image,conf: float = 0.25):
+    # if frame:
+    #     input_image = image
+    # else:
+    #     file = image.file.read()
+    #     image_np = np.frombuffer(file, np.uint8)
+    #     input_image = cv.imdecode(image_np, cv.IMREAD_COLOR) 
     
-    prediction = license_detector(input_image,conf=conf)
+    prediction = license_detector(image,conf=conf)
     return_bytes = get_bytes_from_prediction(prediction,quality=95)
     return return_bytes
 
@@ -91,10 +103,17 @@ def draw_border(img, top_left, bottom_right, color=(0, 255, 0), thickness=6, lin
 
     return img
 
-def crop_car_license_then_read(input_image,car_conf: float = 0.25,license_conf: float = 0.25):
-    frame_results = {}
+def crop_car_license_then_read(input_image,car_conf: float = 0.25,license_conf: float = 0.25,frame_number: int = 0):
+    # frame_results = {}
+    frame_results = [] # change return value type as list
 
-    car_results = car_detector.track(input_image, persist=True,conf=car_conf,classes=vehicles_id)[0]
+    # if len(car_tracker.predictor.trackers) > 0 and frame_number == 0:
+    #     car_tracker.predictor.trackers[0].reset()
+    #     print(car_tracker.predictor.trackers[0])
+    # else:
+    #     print('tracker does not exists')
+
+    car_results = car_tracker.track(input_image, persist=True,conf=car_conf,classes=vehicles_id)[0]
     for car_result in car_results.boxes.data.tolist():
         x1, y1, x2, y2, track_id, score, class_id = car_result
         # print(f"{track_id},{class_id}")
@@ -113,20 +132,58 @@ def crop_car_license_then_read(input_image,car_conf: float = 0.25,license_conf: 
                 plate_gray = cv.cvtColor(plate, cv.COLOR_BGR2GRAY)
                 # posterize
                 _, plate_treshold = cv.threshold(plate_gray, 64, 255, cv.THRESH_BINARY_INV)
-                ocr_detections = plate_reader.readtext(plate_treshold)
-                lic_text, lic_score = read_license_plate(ocr_detections)
+                # ocr_detections = plate_reader.readtext(plate_treshold)
+                # lic_text, lic_score = read_license_plate(ocr_detections)
+
+                ### try rgb and gray and get the best
+                rgb_detections = plate_reader.readtext(plate)
+                gray_detections = plate_reader.readtext(plate_treshold)
+                rgb_text, rgb_score = read_license_plate(rgb_detections)
+                gray_text, gray_score = read_license_plate(gray_detections)
+                
+                candidates = [(rgb_text,rgb_score),(gray_text,gray_score)]
+                valid_candidates = [(text,score) for text,score in candidates if score is not None]
+                lic_text, lic_score = max(valid_candidates,default=(None,None))
+               
                 # results[frame_nmr][track_id] = {
-                frame_results[track_id] = {
-                            'car': {
-                                'bbox': [x1, y1, x2, y2],
-                                'bbox_score': score
-                            },
-                            'license_plate': {
-                                'bbox': [plate_x1 , plate_y1, plate_x2, plate_y2],
-                                'bbox_score': plate_score,
-                                'number': lic_text,
-                                'text_score': lic_score
-                            }
-                } 
-    car_detector.predictor.trackers[0].reset()
+                # frame_results[track_id] = {
+                #             'car': {
+                #                 'bbox': [x1, y1, x2, y2],
+                #                 'bbox_score': score
+                #             },
+                #             'license_plate': {
+                #                 'bbox': [plate_x1 , plate_y1, plate_x2, plate_y2],
+                #                 'bbox_score': plate_score,
+                #                 'number': lic_text,
+                #                 'text_score': lic_score
+                #             }
+                # } 
+                # frame_results[track_id] = {        
+                #     'car_bbox': [x1, y1, x2, y2],
+                #     'car_bbox_score': score,
+                #     'lp_bbox': [plate_x1 , plate_y1, plate_x2, plate_y2],
+                #     'lp_bbox_score': plate_score,
+                #     'lp_number': lic_text,
+                #     'lp_text_score': lic_score
+                # } 
+                frame_results.append({
+                    "frame_number": frame_number,
+                    "track_id": track_id,
+                    "car_bbox": [x1, y1, x2, y2],
+                    "car_bbox_score": score,
+                    "lp_bbox": [plate_x1 , plate_y1, plate_x2, plate_y2],
+                    "lp_bbox_score": plate_score,
+                    "lp_number": lic_text,
+                    "lp_text_score": lic_score
+                })
+    print(car_tracker.predictor.trackers[0])
     return frame_results
+
+
+def reset_tracker():
+    if len(car_tracker.predictor.trackers) > 0:
+        car_tracker.predictor.trackers[0].reset()
+        print(car_tracker.predictor.trackers[0])
+        return True
+    else:
+        print('tracker does not exists')
