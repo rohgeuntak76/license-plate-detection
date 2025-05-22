@@ -32,3 +32,10 @@ print(result[0].keys())
 for i in result[0].keys():
     print(i)
     print(result[0][i]["license_plate"]["number"])
+
+temp = {}
+temp[0] = result[0]
+
+for i in temp[0].keys():
+    print(i)
+    print(temp[0][i]["license_plate"]["number"])
