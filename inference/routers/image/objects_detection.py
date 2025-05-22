@@ -1,6 +1,8 @@
 from fastapi import APIRouter
 from fastapi import UploadFile, Form
 from fastapi.responses import StreamingResponse
+import numpy as np
+import cv2 as cv
 
 from utils.detector import car_detect_bytes,license_detect_bytes
 
@@ -21,7 +23,10 @@ def image_car_detect(image: UploadFile,conf: float = Form(0.25)):
     Returns:
         Image (BytesIO): Annotated Image with Car detection by Yolo
     """
-    return_bytes = car_detect_bytes(image,conf,frame=False)
+    file = image.file.read()
+    image_np = np.frombuffer(file, np.uint8)
+    input_image = cv.imdecode(image_np, cv.IMREAD_COLOR) # bytes to cv image
+    return_bytes = car_detect_bytes(input_image,conf)
 
     return StreamingResponse(content=return_bytes,media_type="image/jpeg")
 
@@ -36,6 +41,9 @@ def image_license_plate_detect(image: UploadFile,conf: float = Form(0.25)):
     Returns:
         Image (BytesIO): Annotated Image with license detection by Yolo
     """
-    return_bytes = license_detect_bytes(image,conf,frame=False)
+    file = image.file.read()
+    image_np = np.frombuffer(file, np.uint8)
+    input_image = cv.imdecode(image_np, cv.IMREAD_COLOR) 
+    return_bytes = license_detect_bytes(input_image,conf)
 
     return StreamingResponse(content=return_bytes,media_type="image/jpeg")
