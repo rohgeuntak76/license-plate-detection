@@ -6,14 +6,14 @@ import cv2 as cv
 import numpy as np
 import io
 
-from utils.detector import draw_border, crop_car_license_then_read, license_detect_number
+from utils.detector import draw_border, crop_car_license_then_read, license_detect_number, reset_tracker
 
 router = APIRouter(
     prefix="/api/image/plate_number",
 )
 
-@router.post("/detect/info", tags=["Plate Number Detection"])
-def image_license_plate_detect(image: UploadFile):
+@router.post("/detect/info", tags=["Test"])
+def image_license_plate_number_info(image: UploadFile):
     """
     Get Cropped license Plate Image , Return Plate number and plate score
     
@@ -29,7 +29,7 @@ def image_license_plate_detect(image: UploadFile):
 
 
 @router.post("/crop/detect/info", tags=["Plate Number Detection"])
-def image_license_plate_detect(image: UploadFile,car_conf: float = Form(0.25),license_conf: float = Form(0.25)):
+def image_license_plate_number_crop_info(image: UploadFile,car_conf: float = Form(0.25),license_conf: float = Form(0.25)):
     """
     Get Car Image -> Crop car -> Crop license plate -> Read Plate Number ( OCR ) -> Return Dict
     
@@ -37,27 +37,30 @@ def image_license_plate_detect(image: UploadFile,car_conf: float = Form(0.25),li
         image (UploadFile): Car Image
     
     Returns:
-        Dict : 'car': {
-                    'bbox': [x1, y1, x2, y2],
-                    'bbox_score': score
-                },
-                'license_plate': {
-                    'bbox': [plate_x1 , plate_y1, plate_x2, plate_y2],
-                    'bbox_score': plate_score,
-                    'number': lic_text,
-                    'text_score': lic_score
-                }
+        list of Dict : [
+                    {
+                        'frame_number': frame_number,
+                        'track_id': track_id,
+                        'car_bbox': [x1, y1, x2, y2],
+                        'car_bbox_score': score,
+                        'lp_bbox': [plate_x1 , plate_y1, plate_x2, plate_y2],
+                        'lp_bbox_score': plate_score,
+                        'lp_number': lic_text,
+                        'lp_text_score': lic_score
+                    },
+        ]
     """
     file = image.file.read()
     image_np = np.frombuffer(file, np.uint8)
     input_image = cv.imdecode(image_np, cv.IMREAD_COLOR) 
 
     results = crop_car_license_then_read(input_image,car_conf,license_conf)
-
+    if reset_tracker():
+        print('tracker reset done!')
     return results
 
 @router.post("/crop/detect/annotated", tags=["Plate Number Detection"])
-def image_license_plate_detect(image: UploadFile):
+def image_license_plate_number_crop_ann(image: UploadFile,car_conf: float = Form(0.25),license_conf: float = Form(0.25)):
     """
     Get Car Image -> Crop Car -> Crop License plate -> Read Plate Number ( OCR ) -> Return Annotated Image
     
@@ -74,21 +77,35 @@ def image_license_plate_detect(image: UploadFile):
     input_image = cv.imdecode(image_np, cv.IMREAD_COLOR) 
     
 
-    results = crop_car_license_then_read(input_image,0)
- 
-    for track_id in results[0].keys():
-        vhcl_x1, vhcl_y1, vhcl_x2, vhcl_y2 = results[0][track_id]['car']['bbox']
+    results = crop_car_license_then_read(input_image,car_conf=car_conf,license_conf=license_conf)
+    if reset_tracker():
+        print('tracker reset done!')
+    # print(results.keys())
+    print(results)
+    # return
+    # for track_id in results[0].keys():
+    # for track_id in results.keys():
+    for object in range(len(results)):
+        # vhcl_x1, vhcl_y1, vhcl_x2, vhcl_y2 = results[track_id]['car']['bbox'] <- for previous output format
+        # vhcl_x1, vhcl_y1, vhcl_x2, vhcl_y2 = results[track_id]['car_bbox']
+        vhcl_x1, vhcl_y1, vhcl_x2, vhcl_y2 = results[object]['car_bbox']
         draw_border(input_image, (int(vhcl_x1), int(vhcl_y1)),(int(vhcl_x2), int(vhcl_y2)), (0, 255, 0), 12, line_length_x=200, line_length_y=200)
         
-        plate_x1, plate_y1, plate_x2, plate_y2 = results[0][track_id]['license_plate']['bbox']
+        # plate_x1, plate_y1, plate_x2, plate_y2 = results[track_id]['license_plate']['bbox'] <- for previous output format
+        # plate_x1, plate_y1, plate_x2, plate_y2 = results[track_id]['lp_bbox']
+        plate_x1, plate_y1, plate_x2, plate_y2 = results[object]['lp_bbox']
         roi = input_image[int(vhcl_y1):int(vhcl_y2), int(vhcl_x1):int(vhcl_x2)]
         cv.rectangle(roi, (int(plate_x1), int(plate_y1)), (int(plate_x2), int(plate_y2)), (0, 0, 255), 6)
 
         # write detected number
-        (text_width, text_height), _ = cv.getTextSize(results[0][track_id]["license_plate"]["number"],cv.FONT_HERSHEY_SIMPLEX,2,6)
+        # (text_width, text_height), _ = cv.getTextSize(results[track_id]["license_plate"]["number"],cv.FONT_HERSHEY_SIMPLEX,2,6) <- for previous output format
+        # (text_width, text_height), _ = cv.getTextSize(results[track_id]["lp_number"],cv.FONT_HERSHEY_SIMPLEX,2,6)
+        (text_width, text_height), _ = cv.getTextSize(results[object]["lp_number"],cv.FONT_HERSHEY_SIMPLEX,2,6)
         cv.putText(
                 input_image,
-                results[0][track_id]["license_plate"]["number"],
+                # results[track_id]["license_plate"]["number"],
+                # results[track_id]["lp_number"],
+                results[object]["lp_number"],
                 (int((vhcl_x2 + vhcl_x1 - text_width)/2), int(vhcl_y1 - text_height)),
                 cv.FONT_HERSHEY_SIMPLEX,
                 2,
@@ -101,5 +118,6 @@ def image_license_plate_detect(image: UploadFile):
     return_image.save(return_bytes, format='JPEG', quality=95)
     return_bytes.seek(0)
     return StreamingResponse(content=return_bytes,media_type="image/jpeg")
+
 
 
