@@ -5,7 +5,8 @@ from fastapi.responses import RedirectResponse
 
 from routers.image import objects_detection,plate_number_detection
 from routers.video import video_objects_detection,video_plate_number_detection
-from routers.utils import utils
+from routers.utils import draw_results,upload
+
 app = FastAPI()
 
 # redirect
@@ -17,7 +18,8 @@ app.include_router(objects_detection.router)
 app.include_router(plate_number_detection.router)
 app.include_router(video_objects_detection.router)
 app.include_router(video_plate_number_detection.router)
-app.include_router(utils.router)
+app.include_router(draw_results.router)
+app.include_router(upload.router)
 
 
 if __name__ == "__main__":

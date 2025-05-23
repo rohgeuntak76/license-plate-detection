@@ -4,14 +4,11 @@ from fastapi.responses import StreamingResponse
 from fastapi import WebSocket,WebSocketDisconnect,websockets
 from websockets.exceptions import InvalidState
 
-import uuid
 import json
 import numpy as np
 import pandas as pd
 import cv2 as cv
 from utils.detector import draw_border, get_bytes_from_prediction
-from PIL import Image
-import io
 import asyncio
 import os
 
@@ -19,18 +16,6 @@ import os
 router = APIRouter(
     prefix="/api/utils",
 )
-
-@router.post("/video/upload",tags=['Utils'])
-async def upload_video(file: UploadFile):
-    # Save uploaded video temporarily
-    temp_path = f"temp_{uuid.uuid4()}.mp4"
-    with open(temp_path, "wb") as buffer:
-        buffer.write(await file.read())
-    
-    # Return session ID for WebSocket connection
-    session_id = str(uuid.uuid4())
-    return {"session_id": session_id, "video_path": temp_path}
-
 
 @router.post("/draw/annotated", tags=["Utils"])
 def image_info_ann(image: UploadFile,item_json: str = Form()):
@@ -81,7 +66,7 @@ async def video_info_ann(websocket: WebSocket):
     Get video and detection info -> Draw and Return Annotated Image
     
     Args:
-        image : Car Image
+        Video : Traffic Video
         info : Detection Info
         
     Returns:
