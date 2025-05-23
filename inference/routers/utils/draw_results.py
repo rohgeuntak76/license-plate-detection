@@ -23,7 +23,7 @@ def image_info_ann(image: UploadFile,item_json: str = Form()):
     Get Image and detection info -> Draw and Return Annotated Image
     
     Args:
-        image : Car Image
+        image : vehicle Image
         info : Detection Info
         
     Returns:
@@ -36,7 +36,7 @@ def image_info_ann(image: UploadFile,item_json: str = Form()):
     info = json.loads(item_json)
     
     for object in range(len(info)):
-        vhcl_x1, vhcl_y1, vhcl_x2, vhcl_y2 = info[object]['car_bbox']
+        vhcl_x1, vhcl_y1, vhcl_x2, vhcl_y2 = info[object]['vehicle_bbox']
         draw_border(input_image, (int(vhcl_x1), int(vhcl_y1)),(int(vhcl_x2), int(vhcl_y2)), (0, 255, 0), 12, line_length_x=200, line_length_y=200)
         
         plate_x1, plate_y1, plate_x2, plate_y2 = info[object]['lp_bbox']
@@ -93,10 +93,10 @@ async def video_info_ann(websocket: WebSocket):
                 break
             df_ = results_df[results_df['frame_number'] == frame_num]
             for index in range(len(df_)):
-                # draw car
+                # draw vehicle
                 # if str(df_.iloc[index]['lp_number']) != 'nan':
                     print(df_.iloc[index]['lp_number'])
-                    vhcl_x1, vhcl_y1, vhcl_x2, vhcl_y2 = df_.iloc[index]['car_bbox']
+                    vhcl_x1, vhcl_y1, vhcl_x2, vhcl_y2 = df_.iloc[index]['vehicle_bbox']
                     
                     draw_border(frame, (int(vhcl_x1), int(vhcl_y1)),(int(vhcl_x2), int(vhcl_y2)), (0, 255, 0),12, line_length_x=200, line_length_y=200)
                     

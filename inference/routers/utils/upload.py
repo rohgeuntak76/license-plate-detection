@@ -3,8 +3,6 @@ from fastapi import UploadFile
 
 import uuid
 
-
-
 router = APIRouter(
     prefix="/api/utils",
 )

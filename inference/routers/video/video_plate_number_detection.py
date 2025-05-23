@@ -6,7 +6,7 @@ import asyncio
 
 import cv2 as cv
 
-from utils.detector import crop_car_license_then_read,reset_tracker
+from utils.detector import crop_vehicle_license_then_read,reset_tracker
 
 
 router = APIRouter(
@@ -24,7 +24,7 @@ async def process_video_ws_license_number(websocket: WebSocket, session_id: str)
     # Get video path from session data (simplified here)
     data = await websocket.receive_json()
     video_path = data["video_path"]
-    car_conf = data["car_conf"]
+    vehicle_conf = data["vehicle_conf"]
     license_conf = data["license_conf"]
     
     # Process video
@@ -42,7 +42,7 @@ async def process_video_ws_license_number(websocket: WebSocket, session_id: str)
             
             frame_num += 1
             # Process frame - detect license plates
-            detection_results = crop_car_license_then_read(input_image=frame,car_conf=car_conf,license_conf=license_conf,frame_number=frame_num)
+            detection_results = crop_vehicle_license_then_read(input_image=frame,vehicle_conf=vehicle_conf,license_conf=license_conf,frame_number=frame_num)
             # # Convert frame to bytes and send
             if websocket.application_state != websockets.WebSocketState.DISCONNECTED:
                 await websocket.send_json(detection_results)

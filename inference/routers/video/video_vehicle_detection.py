@@ -1,24 +1,20 @@
 import os
 from fastapi import APIRouter
-from fastapi import UploadFile, Form
 from fastapi import WebSocket,WebSocketDisconnect,websockets
 from websockets.exceptions import InvalidState
-import uuid
 import asyncio
 
 import cv2 as cv
-import uuid
 
-from utils.license_format import write_csv
-from utils.detector import car_detect_bytes,license_detect_bytes, reset_tracker
+from utils.detector import vehicle_detect_bytes,license_detect_bytes
 
 
 router = APIRouter(
     prefix="/api/video",
 )   
 
-@router.websocket("/ws/car/{session_id}")
-async def process_video_ws_car(websocket: WebSocket, session_id: str):
+@router.websocket("/ws/vehicles/{session_id}")
+async def process_video_ws_vehicle(websocket: WebSocket, session_id: str):
     '''
     Does not Use Tracker
     '''
@@ -42,7 +38,7 @@ async def process_video_ws_car(websocket: WebSocket, session_id: str):
             # if not ret :
                 break
 
-            return_bytes = car_detect_bytes(frame,conf)
+            return_bytes = vehicle_detect_bytes(frame,conf)
             # # Send bytes 
             if websocket.application_state != websockets.WebSocketState.DISCONNECTED:
                 await websocket.send_bytes(return_bytes)
