@@ -164,15 +164,18 @@ class Inference:
 
     def source_upload(self):
         """Handle video file uploads through the Streamlit interface."""
-        self.vid_file_name = ""
-        if self.source == "Video":
-            self.vid_file = self.st.sidebar.file_uploader("Upload Video File", type=["mp4", "mov", "avi", "mkv"])
-            if self.vid_file is not None:
-                self.org_frame.video(self.vid_file,muted=True)    
-        elif self.source == "Image":
-            self.vid_file = self.st.sidebar.file_uploader("Upload Image File", type=["jpeg", "png"])
-            if self.vid_file is not None:
-                self.org_frame.image(self.vid_file)
+        
+        if self.vid_file is None:
+            if self.source == "Video":
+                self.vid_file = self.st.sidebar.file_uploader("Upload Video File", type=["mp4", "mov", "avi", "mkv"])
+                if self.vid_file is not None:
+                    self.org_frame.video(self.vid_file,muted=True)    
+                    # self.st.session_state.stage = 0
+            elif self.source == "Image":
+                self.vid_file = self.st.sidebar.file_uploader("Upload Image File", type=["jpeg", "png"])
+                if self.vid_file is not None:
+                    self.org_frame.image(self.vid_file)
+                    # self.st.session_state.stage = 0
 
     def license_configure(self):
         """Configure the model and load selected classes for inference."""
@@ -229,6 +232,18 @@ class Inference:
         # Update the placeholder
         self.ann_frame.image(image)
         # self.org_frame.image(image)
+
+    def display_dataframe(self,detection_results,results_list):
+        
+        # detection_results_list = json.loads(detection_results)
+        results_list.extend(json.loads(detection_results))
+        # for i in range(len(detection_results_list)):
+            # results_list.append(detection_results_list[i])
+        
+        
+        # results_list.append(json.loads(detection_results))
+        # print(results_list)
+        # self.st.session_state.
 
     def set_state(self,i):
         self.st.session_state.stage = i
@@ -329,17 +344,18 @@ class Inference:
             self.license_sidebar()
             self.source_upload()
             self.license_configure()
+            side_left, side_right = self.st.sidebar.columns(2)
+
             print(self.st.session_state)
             if self.st.session_state.stage == 0:
-                left.button("Start",on_click=self.set_state, args=[1])
-                right.button("Clear",on_click=self.set_state, args=[0])
-            # if left.button("Start",use_container_width=True):
+                side_left.button("Start",on_click=self.set_state, args=[1],use_container_width=True)
+                side_right.button("Clear",on_click=self.set_state, args=[0],use_container_width=True)
+            
             if self.st.session_state.stage == 1:
-                left.button("Start",on_click=self.set_state, args=[1])
-                right.button("Clear",on_click=self.set_state, args=[0])
-                # stop_button = right.button("Clear",use_container_width=True)  # Button to stop the inference
+                side_left.button("Start",on_click=self.set_state, args=[1],use_container_width=True)
+                side_right.button("Clear",on_click=self.set_state, args=[0],use_container_width=True)
+                
                 if self.source == "Image":
-                    # url = "http://" + api_host + "/api/image/plate_number/crop/detect/annotated"
                     files = {
                         'image': (self.vid_file.name, self.vid_file.getvalue(), 'image/jpeg'),
                     }
@@ -347,73 +363,91 @@ class Inference:
                         'car_conf': f'{self.car_conf}',
                         'license_conf': f'{self.license_conf}',
                     }
-                    # response = requests.post(url,files=files,data=data,stream=True)
-                    # annotated_result = io.BytesIO(response.content)
-                    # self.ann_frame.image(annotated_result)
-
+                    
                     info_url = url = "http://" + api_host + "/api/image/plate_number/crop/detect/info"
                     response_info = requests.post(info_url,files=files,data=data)
                     response_info_json = response_info.json()
                     print(response_info_json)
-                    # reframed_result = []
-                    # for track_id, data in response_info.json().items():
-                    #     new_row = {'frame_number':0,'track_id':track_id}
-                    #     new_row.update(data)
-                    #     reframed_result.append(new_row)
-                    
-                    # response_info_df = pd.DataFrame(reframed_result,columns=['frame_number','track_id','car_bbox','car_bbox_score','lp_bbox','lp_bbox_score','lp_number','lp_text_score'])
 
                     self.st.session_state.detection_result = response_info_json
-                    # self.st.dataframe(response_info_df)
-                    # self.st.dataframe(reframed_result)
                     self.st.dataframe(response_info_json)
                     self.st.button("Visualize",on_click=self.set_state, args=[2])
-                    # if self.st.button("Visualize"):
-                    #     pass
                 elif self.source == "Video":
-                    pass
-                    # import websocket
-                    # url = "http://localhost:8000/api/video/upload"
-                    # files = {
-                    #     'file': (self.vid_file.name, self.vid_file.getvalue(), 'video/mp4')
-                    # }
-                    # data = {
-                    #     'conf': f'{self.conf}'
-                    # }
-                    # response = requests.post(url,files=files)
-                    # response_json = response.json()
-                    # sess_id = response_json['session_id']
-                    # video_path = response_json['video_path']
+                    import websocket
+                    url = "http://" + api_host + "/api/utils/video/upload"
+                    files = {
+                        'file': (self.vid_file.name, self.vid_file.getvalue(), 'video/mp4')
+                    }
                     
-                    # ws = websocket.WebSocketApp(
-                    #     f"ws://localhost:8000/api/video/ws/license_plate/{sess_id}",
-                    #     on_message=lambda ws, msg: self.display_frame(msg),
-                    #     on_error=lambda ws, err: self.st.error(f"Error: {err}"),
-                    #     on_close=lambda ws: self.st.info("Processing complete")
-                    # )
+                    response = requests.post(url,files=files)
+                    response_json = response.json()
+                    sess_id = response_json['session_id']
+                    video_path = response_json['video_path']
+                    results_list = []
+                    ws = websocket.WebSocketApp(
+                        f"ws://{api_host}/api/video/ws/license_number/{sess_id}",
+                        on_message=lambda ws, msg: self.display_dataframe(msg,results_list),
+                        on_error=lambda ws, err: self.st.error(f"Error: {err}"),
+                        on_close=lambda ws: self.st.info("Processing complete")
+                    )
 
-                    # # Send video path to backend
-                    # ws.on_open = lambda ws: ws.send(json.dumps({"video_path": video_path,"conf": self.conf}))
-                    # ws.run_forever()
-                
-                    # print("get video stream")
+                    # Send video path to backend
+                    ws.on_open = lambda ws: ws.send(json.dumps({"video_path": video_path,"car_conf": self.car_conf,"license_conf":self.license_conf}))
+                    ws.run_forever()
+                    print(results_list)
+                    print("get license number info from video stream")
+                    print(results_list[5])
+                    self.st.session_state.detection_result = results_list
+                    self.st.dataframe(results_list)
+                    self.st.button("Visualize",on_click=self.set_state, args=[2])
+
+
             if self.st.session_state.stage == 2:
-                left.button("Start",on_click=self.set_state, args=[1])
-                right.button("Clear",on_click=self.set_state, args=[0])
-                files = {
-                    'image': (self.vid_file.name, self.vid_file.getvalue(), 'image/jpeg'),
-                }
-                data = {
-                    'item_json': json.dumps(self.st.session_state.detection_result),
-                }
+                side_left.button("Start",on_click=self.set_state, args=[1])
+                side_right.button("Clear",on_click=self.set_state, args=[0])
+                if self.source == "Image":
+                    files = {
+                        'image': (self.vid_file.name, self.vid_file.getvalue(), 'image/jpeg'),
+                    }
+                    data = {
+                        'item_json': json.dumps(self.st.session_state.detection_result),
+                    }
 
-                url = 'http://' + api_host + '/api/utils/draw/annotated'
-                response = requests.post(url,files=files,data=data,stream=True)
-                annotated_result = io.BytesIO(response.content)
+                    url = 'http://' + api_host + '/api/utils/draw/annotated'
+                    response = requests.post(url,files=files,data=data,stream=True)
+                    annotated_result = io.BytesIO(response.content)
 
-                self.ann_frame.image(annotated_result)
-                self.st.dataframe(self.st.session_state.detection_result)
-                self.st.button("Visualize",on_click=self.set_state, args=[2])
+                    self.ann_frame.image(annotated_result)
+                    self.st.dataframe(self.st.session_state.detection_result)
+                    self.st.button("Visualize",on_click=self.set_state, args=[2])
+                elif self.source == "Video":
+                    import websocket
+                    url = "http://" + api_host + "/api/utils/video/upload"
+                    files = {
+                        'file': (self.vid_file.name, self.vid_file.getvalue(), 'video/mp4')
+                    }
+                    
+                    response = requests.post(url,files=files)
+                    response_json = response.json()
+                    sess_id = response_json['session_id']
+                    video_path = response_json['video_path']
+                    
+                    ws = websocket.WebSocketApp(
+                        f"ws://{self.api_host}/api/utils/ws/draw/annotated/{sess_id}",
+                        on_message=lambda ws, msg: self.display_frame(msg),
+                        on_error=lambda ws, err: self.st.error(f"Error: {err}"),
+                        on_close=lambda ws: self.st.info("Processing complete")
+                    )
+
+                    # Send video path to backend
+                    ws.on_open = lambda ws: ws.send(json.dumps({"video_path": video_path,"detection_results":self.st.session_state.detection_result}))
+                    ws.run_forever()
+                
+                    print("get video stream")
+                    self.st.button("Visualize",on_click=self.set_state, args=[2])
+
+
+                
                     
 
 if __name__ == "__main__":
