@@ -3,18 +3,17 @@
 import io
 from typing import Any
 
-import cv2
-
 from ultralytics import YOLO
 from ultralytics.utils import LOGGER
 from ultralytics.utils.checks import check_requirements
-from ultralytics.utils.downloads import GITHUB_ASSETS_STEMS
 
 import requests
 import json
-import pandas as pd
 
 api_host = "localhost:8000"
+# logo_url = "https://raw.githubusercontent.com/ultralytics/assets/main/logo/Ultralytics_Logotype_Original.svg"
+logo_url = "assets/hpe_pri_grn_pos_rgb.png"
+detection_models = ["Yolo11s","Yolo11s_20epochs_best"]
 
 class Inference:
     """
@@ -61,9 +60,7 @@ class Inference:
 
         self.st = st  # Reference to the Streamlit module
         self.source = None  # Video source selection (webcam or video file)
-        self.enable_trk = False  # Flag to toggle object tracking
-        self.conf = 0.25  # Confidence threshold for detection
-        self.car_conf = 0.25
+        self.vehicle_conf = 0.25
         self.license_conf = 0.25
         self.iou = 0.45  # Intersection-over-Union (IoU) threshold for non-maximum suppression
         self.org_frame = None  # Container for the original frame display
@@ -92,23 +89,23 @@ class Inference:
         menu_style_cfg = """<style>MainMenu {visibility: hidden;}</style>"""  # Hide main menu style
 
         # Main title of streamlit application
-        main_title_cfg = """<div><h1 style="color:#FF64DA; text-align:center; font-size:40px; margin-top:-50px;
-        font-family: 'Archivo', sans-serif; margin-bottom:20px;">Ultralytics YOLO Streamlit Application</h1></div>"""
+        main_title_cfg = """<div><h1 style="color:#01A982; text-align:center; font-size:40px; margin-top:-50px;
+        font-family: 'Archivo', sans-serif; margin-bottom:20px;">License Plate Number Detection Application</h1></div>"""
 
         # Subtitle of streamlit application
-        sub_title_cfg = """<div><h4 style="color:#042AFF; text-align:center; font-family: 'Archivo', sans-serif; 
-        margin-top:-15px; margin-bottom:50px;">Experience real-time object detection on your webcam with the power 
-        of Ultralytics YOLO! 🚀</h4></div>"""
+        # sub_title_cfg = """<div><h4 style="color:#000000; text-align:center; font-family: 'Archivo', sans-serif; 
+        # margin-top:-15px; margin-bottom:50px;">Experience real-time object detection on your webcam with the power 
+        # of Ultralytics YOLO! 🚀</h4></div>"""
 
         # Set html page configuration and append custom HTML
-        self.st.set_page_config(page_title="YOLO Streamlit App", layout="wide")
+        self.st.set_page_config(page_title="Licenses Number Detection App", layout="wide")
         self.st.markdown(menu_style_cfg, unsafe_allow_html=True)
         self.st.markdown(main_title_cfg, unsafe_allow_html=True)
-        self.st.markdown(sub_title_cfg, unsafe_allow_html=True)
+        # self.st.markdown(sub_title_cfg, unsafe_allow_html=True)
 
     def usecase_sidebar(self):
         with self.st.sidebar:  # Add Ultralytics LOGO
-            logo = "https://raw.githubusercontent.com/ultralytics/assets/main/logo/Ultralytics_Logotype_Original.svg"
+            logo = logo_url
             self.st.image(logo, width=250)
 
         self.st.sidebar.title("Use Case")  # Add elements to vertical setting menu
@@ -119,21 +116,17 @@ class Inference:
     
     def license_sidebar(self):
         """Configure the Streamlit sidebar for model and inference settings."""
-        # with self.st.sidebar:  # Add Ultralytics LOGO
-        #     logo = "https://raw.githubusercontent.com/ultralytics/assets/main/logo/Ultralytics_Logotype_Original.svg"
-        #     self.st.image(logo, width=250)
-
         self.st.sidebar.title("Configuration")  # Add elements to vertical setting menu
         self.source = self.st.sidebar.selectbox(
             "Data Type",
             ("Image", "Video"),
         )  # Add source selection dropdown
         
-        self.car_conf = float(
-            self.st.sidebar.slider("Car Confidence Threshold", 0.0, 1.0, self.conf, 0.01)
+        self.vehicle_conf = float(
+            self.st.sidebar.slider("vehicle Confidence Threshold", 0.0, 1.0, self.vehicle_conf, 0.01)
         )
         self.license_conf = float(
-            self.st.sidebar.slider("License Confidence Threshold", 0.0, 1.0, self.conf, 0.01)
+            self.st.sidebar.slider("License Confidence Threshold", 0.0, 1.0, self.license_conf, 0.01)
         )  # Slider for confidence
         # self.iou = float(self.st.sidebar.slider("IoU Threshold", 0.0, 1.0, self.iou, 0.01))  # Slider for NMS threshold
 
@@ -143,18 +136,14 @@ class Inference:
 
     def vehicle_sidebar(self):
         """Configure the Streamlit sidebar for model and inference settings."""
-        # with self.st.sidebar:  # Add Ultralytics LOGO
-        #     logo = "https://raw.githubusercontent.com/ultralytics/assets/main/logo/Ultralytics_Logotype_Original.svg"
-        #     self.st.image(logo, width=250)
-
         self.st.sidebar.title("Configuration")  # Add elements to vertical setting menu
         self.source = self.st.sidebar.selectbox(
             "Data Type",
             ("Image", "Video"),
         )  # Add source selection dropdown
-        # self.enable_trk = self.st.sidebar.radio("Enable Tracking", ("Yes", "No"))  # Enable object tracking
-        self.conf = float(
-            self.st.sidebar.slider("Confidence Threshold", 0.0, 1.0, self.conf, 0.01)
+        
+        self.vehicle_conf = float(
+            self.st.sidebar.slider("Confidence Threshold", 0.0, 1.0, self.vehicle_conf, 0.01)
         )  # Slider for confidence
         # self.iou = float(self.st.sidebar.slider("IoU Threshold", 0.0, 1.0, self.iou, 0.01))  # Slider for NMS threshold
 
@@ -180,14 +169,14 @@ class Inference:
     def license_configure(self):
         """Configure the model and load selected classes for inference."""
         # Add dropdown menu for model selection
-        car_detectors = ["Yolo11s"]
+        vehicle_detectors = ["Yolo11s"]
         license_detectors = ["Yolo11s_20epochs_best"]
-        car_selected_model = self.st.sidebar.selectbox("Car Detector", car_detectors)
+        vehicle_selected_model = self.st.sidebar.selectbox("vehicle Detector", vehicle_detectors)
         license_selected_model = self.st.sidebar.selectbox("License Plate Detector", license_detectors)
 
         # with self.st.spinner("Model is downloading..."):
         #     self.model_dir = "../inference/models"
-        #     self.model = YOLO(f"{self.model_dir}/{car_selected_model.lower()}.pt")  # Load the YOLO model
+        #     self.model = YOLO(f"{self.model_dir}/{vehicle_selected_model.lower()}.pt")  # Load the YOLO model
         #     class_names = list(self.model.names.values())  # Convert dictionary to list of class names
         #     self.model_load = self.st.success("Model loaded successfully!")
         
@@ -201,15 +190,14 @@ class Inference:
         # if not isinstance(self.selected_ind, list):  # Ensure selected_options is a list
         #     self.selected_ind = list(self.selected_ind)
 
-    def car_configure(self):
+    def vehicle_configure(self):
         """Configure the model and load selected classes for inference."""
         # Add dropdown menu for model selection
-        available_models = ["Yolo11s","Yolo11s_20epochs_best"]
-        # if self.model_path:  # If user provided the custom model, insert model without suffix as *.pt is added later
-        #     available_models.insert(0, self.model_path.split(".pt")[0])
+        available_models = detection_models
+        
         selected_model = self.st.sidebar.selectbox("Model", available_models)
 
-        with self.st.spinner("Model is downloading..."):
+        with self.st.spinner("Model is loading..."):
             self.model_dir = "../inference/models"
             self.model = YOLO(f"{self.model_dir}/{selected_model.lower()}.pt")  # Load the YOLO model
             class_names = list(self.model.names.values())  # Convert dictionary to list of class names
@@ -227,119 +215,85 @@ class Inference:
 
     def display_frame(self,frame_bytes):
         # Convert bytes to image
-        # image = Image.open(io.BytesIO(frame_bytes))
         image = io.BytesIO(frame_bytes)
         # Update the placeholder
         self.ann_frame.image(image)
-        # self.org_frame.image(image)
 
     def display_dataframe(self,detection_results,results_list):
-        
-        # detection_results_list = json.loads(detection_results)
+        # update list
         results_list.extend(json.loads(detection_results))
-        # for i in range(len(detection_results_list)):
-            # results_list.append(detection_results_list[i])
-        
-        
-        # results_list.append(json.loads(detection_results))
-        # print(results_list)
-        # self.st.session_state.
 
     def set_state(self,i):
+        '''
+        stage 0 : intial stage
+        stage 1 : Do inference and Get the Inference results
+        stage 2 : Visualize the outputs
+        '''
         self.st.session_state.stage = i
 
     def inference(self):
-        """Perform real-time object detection inference on video or webcam feed."""
+        """Perform vehicle detection or license plate number inference on video or image."""
         self.web_ui()  # Initialize the web interface
         self.usecase_sidebar()
         if self.usecase == "Vehicle Detection" :
             self.vehicle_sidebar()  # Create the sidebar
             self.source_upload()  # Upload the video source
-            self.car_configure()  # Configure the app
+            self.vehicle_configure()  # Configure the app
             side_left, side_right = self.st.sidebar.columns(2)
 
             if side_left.button("Start",use_container_width=True):
                 self.model_load.empty()   
-                stop_button = side_right.button("Clear",use_container_width=True)  # Button to stop the inference
+                side_right.button("Clear",use_container_width=True)  # Button to stop the inference
                 if self.source == "Image":
                     print(self.selected_classes)
-                    if self.selected_classes[0] == 'License_Plate':
+                    if self.selected_classes[0] == 'License_Plate': # license plate detection usecase
                         url = "http://" + api_host + "/api/image/plates/detect/annotated"
-                        files = {
+                    else: # vehicle detction usecase
+                        url = "http://" + api_host + "/api/image/vehicles/detect/annotated"
+                    # Do inference
+                    files = {
                             'image': (self.vid_file.name, self.vid_file.getvalue(), 'image/jpeg'),
                         }
-                        data = {
-                            'conf': f'{self.conf}'
-                        }
-                        response = requests.post(url,files=files,data=data,stream=True)
-                        annotated_result = io.BytesIO(response.content)
+                    data = {
+                        'conf': f'{self.vehicle_conf}'
+                    }
+                    response = requests.post(url,files=files,data=data,stream=True)
+                    annotated_result = io.BytesIO(response.content)
 
-                        self.ann_frame.image(annotated_result)
-                    else:
-                        url = "http://" + api_host + "/api/image/cars/detect/annotated"
-                        files = {
-                            'image': (self.vid_file.name, self.vid_file.getvalue(), 'image/jpeg'),
-                        }
-                        data = {
-                            'conf': f'{self.conf}'
-                        }
-                        response = requests.post(url,files=files,data=data,stream=True)
-                        annotated_result = io.BytesIO(response.content)
-
-                        self.ann_frame.image(annotated_result)
+                    self.ann_frame.image(annotated_result)
                 elif self.source == "Video":
+                    import websocket
                     if self.selected_classes[0] == 'License_Plate':
-                        import websocket
-                        url = "http://" + api_host + "/api/video/upload"
-                        files = {
-                            'file': (self.vid_file.name, self.vid_file.getvalue(), 'video/mp4')
-                        }
-                        data = {
-                            'conf': f'{self.conf}'
-                        }
-                        response = requests.post(url,files=files)
-                        response_json = response.json()
-                        sess_id = response_json['session_id']
-                        video_path = response_json['video_path']
-                        
-                        ws = websocket.WebSocketApp(
-                            f"ws://localhost:8000/api/video/ws/license_plate/{sess_id}",
-                            on_message=lambda ws, msg: self.display_frame(msg),
-                            on_error=lambda ws, err: self.st.error(f"Error: {err}"),
-                            on_close=lambda ws: self.st.info("Processing complete")
-                        )
-
-                        # Send video path to backend
-                        ws.on_open = lambda ws: ws.send(json.dumps({"video_path": video_path,"conf": self.conf}))
-                        ws.run_forever()
-                    
-                        print("get video stream")
+                        ws_url = f"ws://{api_host}/api/video/ws/license_plate/"
                     else:
-                        import websocket
-                        url = "http://" + api_host + "/api/utils/video/upload"
-                        files = {
-                            'file': (self.vid_file.name, self.vid_file.getvalue(), 'video/mp4')
-                        }
-                        data = {
-                            'conf': f'{self.conf}'
-                        }
-                        response = requests.post(url,files=files)
-                        response_json = response.json()
-                        sess_id = response_json['session_id']
-                        video_path = response_json['video_path']
-                        
-                        ws = websocket.WebSocketApp(
-                            f"ws://{self.api_host}/api/video/ws/car/{sess_id}",
-                            on_message=lambda ws, msg: self.display_frame(msg),
-                            on_error=lambda ws, err: self.st.error(f"Error: {err}"),
-                            on_close=lambda ws: self.st.info("Processing complete")
-                        )
+                        ws_url = f"ws://{self.api_host}/api/video/ws/vehicle/"
 
-                        # Send video path to backend
-                        ws.on_open = lambda ws: ws.send(json.dumps({"video_path": video_path,"conf":self.conf}))
-                        ws.run_forever()
+                    # Upload Video
+                    upload_url = "http://" + api_host + "/api/utils/video/upload"
+                    files = {
+                        'file': (self.vid_file.name, self.vid_file.getvalue(), 'video/mp4')
+                    }
+                    data = {
+                        'conf': f'{self.vehicle_conf}'
+                    }
+                    response = requests.post(upload_url,files=files)
+                    response_json = response.json()
+                    sess_id = response_json['session_id']
+                    video_path = response_json['video_path']
+                    # Do inference
+                    ws_url = ws_url + sess_id
+                    ws = websocket.WebSocketApp(
+                        ws_url,
+                        on_message=lambda ws, msg: self.display_frame(msg),
+                        on_error=lambda ws, err: self.st.error(f"Error: {err}"),
+                        on_close=lambda ws: self.st.info("Processing complete")
+                    )
+
+                    # Send video path to backend
+                    ws.on_open = lambda ws: ws.send(json.dumps({"video_path": video_path,"conf":self.vehicle_conf}))
+                    ws.run_forever()
                     
-                        print("get video stream")
+                        
         elif self.usecase == 'License Number Detection':
             self.license_sidebar()
             self.source_upload()
@@ -360,14 +314,13 @@ class Inference:
                         'image': (self.vid_file.name, self.vid_file.getvalue(), 'image/jpeg'),
                     }
                     data = {
-                        'car_conf': f'{self.car_conf}',
+                        'vehicle_conf': f'{self.vehicle_conf}',
                         'license_conf': f'{self.license_conf}',
                     }
                     
                     info_url = url = "http://" + api_host + "/api/image/plate_number/crop/detect/info"
                     response_info = requests.post(info_url,files=files,data=data)
                     response_info_json = response_info.json()
-                    print(response_info_json)
 
                     self.st.session_state.detection_result = response_info_json
                     self.st.dataframe(response_info_json)
@@ -392,19 +345,17 @@ class Inference:
                     )
 
                     # Send video path to backend
-                    ws.on_open = lambda ws: ws.send(json.dumps({"video_path": video_path,"car_conf": self.car_conf,"license_conf":self.license_conf}))
+                    ws.on_open = lambda ws: ws.send(json.dumps({"video_path": video_path,"vehicle_conf": self.vehicle_conf,"license_conf":self.license_conf}))
                     ws.run_forever()
-                    print(results_list)
-                    print("get license number info from video stream")
-                    print(results_list[5])
+              
                     self.st.session_state.detection_result = results_list
                     self.st.dataframe(results_list)
                     self.st.button("Visualize",on_click=self.set_state, args=[2])
 
 
             if self.st.session_state.stage == 2:
-                side_left.button("Start",on_click=self.set_state, args=[1])
-                side_right.button("Clear",on_click=self.set_state, args=[0])
+                side_left.button("Start",on_click=self.set_state, args=[1],use_container_width=True)
+                side_right.button("Clear",on_click=self.set_state, args=[0],use_container_width=True)
                 if self.source == "Image":
                     files = {
                         'image': (self.vid_file.name, self.vid_file.getvalue(), 'image/jpeg'),
@@ -445,10 +396,6 @@ class Inference:
                 
                     print("get video stream")
                     self.st.button("Visualize",on_click=self.set_state, args=[2])
-
-
-                
-                    
 
 if __name__ == "__main__":
     import sys  # Import the sys module for accessing command-line arguments
