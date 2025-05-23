@@ -13,7 +13,7 @@ router = APIRouter(
     prefix="/api/video",
 )   
 
-@router.websocket("/ws/vehicles/{session_id}")
+@router.websocket("/ws/vehicle/{session_id}")
 async def process_video_ws_vehicle(websocket: WebSocket, session_id: str):
     '''
     Does not Use Tracker
@@ -88,7 +88,7 @@ async def process_video_ws_license_plate(websocket: WebSocket, session_id: str):
             
             frame_num += 1
             # Process frame - detect license plates
-            return_bytes = license_detect_bytes(frame,conf,frame=True)
+            return_bytes = license_detect_bytes(frame,conf)
             # # Convert frame to bytes and send
             if websocket.application_state != websockets.WebSocketState.DISCONNECTED:
                 await websocket.send_bytes(return_bytes)
