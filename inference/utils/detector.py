@@ -13,37 +13,23 @@ plate_reader = easyocr.Reader(['en'],gpu=False)
 vehicles_id = [2,3,5,7]
 
 def car_detect_bytes(image,conf: float = 0.25):
-    # if frame:
-    #     input_image = image
+    # if getattr(car_detector,'predictor',None) is not None:
+    #     print('Yolo have Predictor!!!!')
+    #     if getattr(car_detector.predictor,'trackers',None) is not None:
+    #         print('Tracker does exist!!')
+    #     else:
+    #         print("Tracker does not exists!!!!")
     # else:
-    #     file = image.file.read()
-    #     image_np = np.frombuffer(file, np.uint8)
-    #     input_image = cv.imdecode(image_np, cv.IMREAD_COLOR)  # bytes -> numpy 
-
-    # input_image = image
-    if getattr(car_detector,'predictor',None) is not None:
-        print('Yolo have Predictor!!!!')
-        if getattr(car_detector.predictor,'trackers',None) is not None:
-            # delattr(car_detector.predictor,'trackers')
-            # print('Tracker attr was deleted!')
-            print('Tracker does exist!!')
-        else:
-            print("Tracker does not exists!!!!")
-    else:
-        print("Yolo does not have Predictor!!!")
-    prediction = car_detector(image,conf=conf,classes=vehicles_id)
+    #     print("Yolo does not have Predictor!!!")
+    results = car_detector(image,conf=conf,classes=vehicles_id)
+    prediction = results[0].plot()
     return_bytes = get_bytes_from_prediction(prediction,quality=95)
     return return_bytes
 
 def license_detect_bytes(image,conf: float = 0.25):
-    # if frame:
-    #     input_image = image
-    # else:
-    #     file = image.file.read()
-    #     image_np = np.frombuffer(file, np.uint8)
-    #     input_image = cv.imdecode(image_np, cv.IMREAD_COLOR) 
     
-    prediction = license_detector(image,conf=conf)
+    results = license_detector(image,conf=conf)
+    prediction = results[0].plot()
     return_bytes = get_bytes_from_prediction(prediction,quality=95)
     return return_bytes
 
@@ -64,8 +50,9 @@ def get_bytes_from_prediction(prediction: np.ndarray,quality: int) -> bytes:
     Returns:
     bytes : BytesIO object that contains the image in JPEG format with quality 95
     """
-    im_bgr = prediction[0].plot()
-    im_rgb = im_bgr[...,::-1]
+    # im_bgr = prediction[0].plot()
+    # im_rgb = im_bgr[...,::-1]
+    im_rgb = prediction[...,::-1]
     return_image = Image.fromarray(im_rgb)
     return_bytes = io.BytesIO()
     return_image.save(return_bytes, format='JPEG', quality=quality)
@@ -106,12 +93,6 @@ def draw_border(img, top_left, bottom_right, color=(0, 255, 0), thickness=6, lin
 def crop_car_license_then_read(input_image,car_conf: float = 0.25,license_conf: float = 0.25,frame_number: int = 0):
     # frame_results = {}
     frame_results = [] # change return value type as list
-
-    # if len(car_tracker.predictor.trackers) > 0 and frame_number == 0:
-    #     car_tracker.predictor.trackers[0].reset()
-    #     print(car_tracker.predictor.trackers[0])
-    # else:
-    #     print('tracker does not exists')
 
     car_results = car_tracker.track(input_image, persist=True,conf=car_conf,classes=vehicles_id)[0]
     for car_result in car_results.boxes.data.tolist():
@@ -177,6 +158,7 @@ def crop_car_license_then_read(input_image,car_conf: float = 0.25,license_conf: 
                     "lp_text_score": lic_score
                 })
     print(car_tracker.predictor.trackers[0])
+    print(len(car_tracker.predictor.trackers))
     return frame_results
 
 
