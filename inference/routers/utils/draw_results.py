@@ -8,7 +8,8 @@ import json
 import numpy as np
 import pandas as pd
 import cv2 as cv
-from utils.detector import draw_border, get_bytes_from_prediction
+# from utils.detector import draw_border, get_bytes_from_prediction
+from utils.detector import get_bytes_from_prediction
 import asyncio
 import os
 
@@ -37,23 +38,23 @@ def image_info_ann(image: UploadFile,item_json: str = Form()):
     
     for object in range(len(info)):
         vhcl_x1, vhcl_y1, vhcl_x2, vhcl_y2 = info[object]['vehicle_bbox']
-        draw_border(input_image, (int(vhcl_x1), int(vhcl_y1)),(int(vhcl_x2), int(vhcl_y2)), (0, 255, 0), 12, line_length_x=200, line_length_y=200)
-        
+        # draw_border(input_image, (int(vhcl_x1), int(vhcl_y1)),(int(vhcl_x2), int(vhcl_y2)), (0, 255, 0), 12, line_length_x=200, line_length_y=200)
+        cv.rectangle(input_image, (int(vhcl_x1), int(vhcl_y1)),(int(vhcl_x2), int(vhcl_y2)), (0, 255, 0), 8)
         plate_x1, plate_y1, plate_x2, plate_y2 = info[object]['lp_bbox']
         roi = input_image[int(vhcl_y1):int(vhcl_y2), int(vhcl_x1):int(vhcl_x2)]
         cv.rectangle(roi, (int(plate_x1), int(plate_y1)), (int(plate_x2), int(plate_y2)), (0, 0, 255), 6)
 
         # write detected number
-        (text_width, text_height), _ = cv.getTextSize(info[object]["lp_number"],cv.FONT_HERSHEY_SIMPLEX,2,6)
+        (text_width, text_height), _ = cv.getTextSize(info[object]["lp_number"],cv.FONT_HERSHEY_DUPLEX,2,6)
         cv.putText(
-                input_image,
+                roi,
                 info[object]["lp_number"],
-                (int((vhcl_x2 + vhcl_x1 - text_width)/2), int(vhcl_y1 - text_height)),
-                cv.FONT_HERSHEY_SIMPLEX,
+                (int((plate_x2 + plate_x1 - text_width)/2), int(plate_y1 - text_height)),
+                cv.FONT_HERSHEY_DUPLEX,
                 2,
                 (0, 255, 0),
                 6
-            )
+            )   
     
     return_bytes = get_bytes_from_prediction(input_image,quality=95)
     # return_bytes.seek(0)
@@ -98,8 +99,8 @@ async def video_info_ann(websocket: WebSocket):
                     print(df_.iloc[index]['lp_number'])
                     vhcl_x1, vhcl_y1, vhcl_x2, vhcl_y2 = df_.iloc[index]['vehicle_bbox']
                     
-                    draw_border(frame, (int(vhcl_x1), int(vhcl_y1)),(int(vhcl_x2), int(vhcl_y2)), (0, 255, 0),12, line_length_x=200, line_length_y=200)
-                    
+                    # draw_border(frame, (int(vhcl_x1), int(vhcl_y1)),(int(vhcl_x2), int(vhcl_y2)), (0, 255, 0),12, line_length_x=200, line_length_y=200)
+                    cv.rectangle(frame, (int(vhcl_x1), int(vhcl_y1)),(int(vhcl_x2), int(vhcl_y2)), (0, 255, 0), 8)
                     # draw license plate
                     plate_x1, plate_y1, plate_x2, plate_y2 = df_.iloc[index]['lp_bbox']
 
@@ -108,10 +109,20 @@ async def video_info_ann(websocket: WebSocket):
                     cv.rectangle(roi, (int(plate_x1), int(plate_y1)), (int(plate_x2), int(plate_y2)), (0, 0, 255), 6)
 
                     # write detected number
-                    (text_width, text_height), _ = cv.getTextSize(str(df_.iloc[index]['lp_number']),cv.FONT_HERSHEY_SIMPLEX,2,6)
+                    # (text_width, text_height), _ = cv.getTextSize(str(df_.iloc[index]['lp_number']),cv.FONT_HERSHEY_SIMPLEX,2,6)
 
-                    cv.putText(frame,str(df_.iloc[index]['lp_number']),(int((vhcl_x2 + vhcl_x1 - text_width)/2), int(vhcl_y1 - text_height)),cv.FONT_HERSHEY_SIMPLEX,2,(0, 255, 0),6)
+                    # cv.putText(frame,str(df_.iloc[index]['lp_number']),(int((vhcl_x2 + vhcl_x1 - text_width)/2), int(vhcl_y1 - text_height)),cv.FONT_HERSHEY_SIMPLEX,2,(0, 255, 0),6)
                     
+                    (text_width, text_height), _ = cv.getTextSize(str(df_.iloc[index]['lp_number']),cv.FONT_HERSHEY_DUPLEX,2,6)
+                    cv.putText(
+                            roi,
+                            str(df_.iloc[index]['lp_number']),
+                            (int((plate_x2 + plate_x1 - text_width)/2), int(plate_y1 - text_height)),
+                            cv.FONT_HERSHEY_DUPLEX,
+                            2,
+                            (0, 255, 0),
+                            6
+                        )
                     return_bytes = get_bytes_from_prediction(frame,quality=95)
                     if websocket.application_state != websockets.WebSocketState.DISCONNECTED:
                         await websocket.send_bytes(return_bytes)
