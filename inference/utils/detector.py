@@ -5,10 +5,19 @@ import cv2 as cv
 import easyocr
 from ultralytics import YOLO
 from utils.license_format import license_complies_format,format_license
+import yaml
 
-vehicle_detector = YOLO("./models/yolo11s.pt")
-vehicle_tracker = YOLO("./models/yolo11s.pt")
-license_detector = YOLO("./models/yolo11s_20epochs_best.pt")
+with open("/Users/geuntakroh/workspace/github/license-plate-detection/inference/config.yaml", "r") as f:
+    config = yaml.safe_load(f)
+
+# TOKEN = config["detectors"]["server_token"]
+MODEL_ENDPOINT = config["detectors"]["server_url"]
+VEHICLE_MODEL_NAME = config["detectors"]["vehicle_detector"]
+LICENSE_MODEL_NAME = config["detectors"]["license_detector"]
+
+vehicle_detector = YOLO(MODEL_ENDPOINT + VEHICLE_MODEL_NAME, task='detect')
+vehicle_tracker = YOLO(MODEL_ENDPOINT + VEHICLE_MODEL_NAME, task='detect')
+license_detector = YOLO(MODEL_ENDPOINT + LICENSE_MODEL_NAME, task='detect')
 plate_reader = easyocr.Reader(['en'],gpu=False)
 vehicles_id = [2,3,5,7]
 
@@ -72,23 +81,23 @@ def read_license_plate(detections):
 
     return None, None
 
-def draw_border(img, top_left, bottom_right, color=(0, 255, 0), thickness=6, line_length_x=200, line_length_y=200):
-    x1, y1 = top_left
-    x2, y2 = bottom_right
+# def draw_border(img, top_left, bottom_right, color=(0, 255, 0), thickness=6, line_length_x=200, line_length_y=200):
+#     x1, y1 = top_left
+#     x2, y2 = bottom_right
 
-    cv.line(img, (x1, y1), (x1, y1 + line_length_y), color, thickness)  #-- top-left
-    cv.line(img, (x1, y1), (x1 + line_length_x, y1), color, thickness)
+#     cv.line(img, (x1, y1), (x1, y1 + line_length_y), color, thickness)  #-- top-left
+#     cv.line(img, (x1, y1), (x1 + line_length_x, y1), color, thickness)
 
-    cv.line(img, (x1, y2), (x1, y2 - line_length_y), color, thickness)  #-- bottom-left
-    cv.line(img, (x1, y2), (x1 + line_length_x, y2), color, thickness)
+#     cv.line(img, (x1, y2), (x1, y2 - line_length_y), color, thickness)  #-- bottom-left
+#     cv.line(img, (x1, y2), (x1 + line_length_x, y2), color, thickness)
 
-    cv.line(img, (x2, y1), (x2 - line_length_x, y1), color, thickness)  #-- top-right
-    cv.line(img, (x2, y1), (x2, y1 + line_length_y), color, thickness)
+#     cv.line(img, (x2, y1), (x2 - line_length_x, y1), color, thickness)  #-- top-right
+#     cv.line(img, (x2, y1), (x2, y1 + line_length_y), color, thickness)
 
-    cv.line(img, (x2, y2), (x2, y2 - line_length_y), color, thickness)  #-- bottom-right
-    cv.line(img, (x2, y2), (x2 - line_length_x, y2), color, thickness)
+#     cv.line(img, (x2, y2), (x2, y2 - line_length_y), color, thickness)  #-- bottom-right
+#     cv.line(img, (x2, y2), (x2 - line_length_x, y2), color, thickness)
 
-    return img
+#     return img
 
 def crop_vehicle_license_then_read(input_image,vehicle_conf: float = 0.25,license_conf: float = 0.25,frame_number: int = 0):
     # frame_results = {}
