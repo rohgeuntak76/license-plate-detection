@@ -14,7 +14,7 @@ import pandas as pd
 api_host = "localhost:8000"
 # logo_url = "https://raw.githubusercontent.com/ultralytics/assets/main/logo/Ultralytics_Logotype_Original.svg"
 logo_url = "assets/hpe_pri_grn_pos_rgb.png"
-detection_models = ["Yolo11s","Yolo11s_20epochs_best"]
+# detection_models = ["Yolo11s","Yolo11s_20epochs_best"]
 
 class Inference:
     """
@@ -169,21 +169,34 @@ class Inference:
     def license_configure(self):
         """Configure the model and load selected classes for inference."""
         # Add dropdown menu for model selection
-        vehicle_detectors = ["Yolo11s"]
-        license_detectors = ["Yolo11s_20epochs_best"]
-        vehicle_selected_model = self.st.sidebar.selectbox("vehicle Detector", vehicle_detectors)
-        license_selected_model = self.st.sidebar.selectbox("License Plate Detector", license_detectors)
+        url = "http://" + api_host + "/api/utils/models/info"
+        response = requests.get(url)
+        response_json = response.json()
+        # print(response_json)
+        vehicle_detectors = response_json["VEHICLE_MODEL_NAME"]
+        license_detectors = response_json["LICENSE_MODEL_NAME"]
+        self.st.sidebar.text("Vehicle Detector")
+        self.st.sidebar.code(vehicle_detectors)
+        self.st.sidebar.text("License Plate Detector")
+        self.st.sidebar.code(license_detectors)
 
     def vehicle_configure(self):
         """Configure the model and load selected classes for inference."""
         # Add dropdown menu for model selection
-        available_models = detection_models
+        url = "http://" + api_host + "/api/utils/models/info"
+        response = requests.get(url)
+        response_json = response.json()
+        # print(response_json)
+        vehicle_detectors = response_json["VEHICLE_MODEL_NAME"]
+        license_detectors = response_json["LICENSE_MODEL_NAME"]
+
+        available_models = [vehicle_detectors, license_detectors]
         
         selected_model = self.st.sidebar.selectbox("Model", available_models)
 
         with self.st.spinner("Model is loading..."):
-            self.model_dir = "../inference/models"
-            self.model = YOLO(f"{self.model_dir}/{selected_model.lower()}.pt")  # Load the YOLO model
+            # self.model_dir = "../inference/models"
+            self.model = YOLO(f"{selected_model.lower()}",task='detect')  # Load the YOLO model
             class_names = list(self.model.names.values())  # Convert dictionary to list of class names
             self.model_load = self.st.success("Model loaded successfully!")
         
