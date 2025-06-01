@@ -5,6 +5,7 @@ import cv2 as cv
 import easyocr
 from ultralytics import YOLO
 from utils.license_format import license_complies_format,format_license
+from utils.logging import logger
 import yaml
 
 with open("./config.yaml", "r") as f:
@@ -184,7 +185,7 @@ def crop_vehicle_license_then_read(input_image,vehicle_conf: float = 0.25,licens
 def reset_tracker():
     if len(vehicle_tracker.predictor.trackers) > 0:
         vehicle_tracker.predictor.trackers[0].reset()
-        print(vehicle_tracker.predictor.trackers[0])
+        # print(vehicle_tracker.predictor.trackers[0])
         return True
     else:
-        print('tracker does not exists')
+        logger.info('tracker does not exists')

@@ -8,6 +8,7 @@ import cv2 as cv
 import numpy as np
 
 from utils.detector import crop_vehicle_license_then_read, license_detect_number, reset_tracker , get_bytes_from_prediction
+from utils.logging import logger
 
 class DetectionResult(BaseModel):
     """Single vehicle and license plate detection result"""
@@ -51,7 +52,7 @@ def image_license_plate_number_crop_info(image: UploadFile,vehicle_conf: float =
 
     results = crop_vehicle_license_then_read(input_image,vehicle_conf,license_conf)
     if reset_tracker():
-        print('tracker reset done!')
+        logger.info('tracker reset done!')
     return results
 
 @router.post(
@@ -68,7 +69,7 @@ def image_license_plate_number_crop_ann(image: UploadFile,vehicle_conf: float = 
 
     results = crop_vehicle_license_then_read(input_image,vehicle_conf=vehicle_conf,license_conf=license_conf)
     if reset_tracker():
-        print('tracker reset done!')
+        logger.info('tracker reset done!')
     
     for object in range(len(results)):
         # Draw Vehicle Bbox

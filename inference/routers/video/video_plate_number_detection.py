@@ -7,7 +7,7 @@ import asyncio
 import cv2 as cv
 
 from utils.detector import crop_vehicle_license_then_read,reset_tracker
-
+from utils.logging import logger
 
 router = APIRouter(
     prefix="/api/video",
@@ -47,21 +47,21 @@ async def process_video_ws_license_number(websocket: WebSocket, session_id: str)
             if websocket.application_state != websockets.WebSocketState.DISCONNECTED:
                 await websocket.send_json(detection_results)
     
-            # # Control processing rate to not overwhelm the connection ( without this sleep, dataframe print and interrupt inference won't work)
+            # # Control processing rate to not overwhelm the connection ( without this sleep, dataframe visualize and interrupt inference won't work)
             await asyncio.sleep(1/fps)
 
     except (InvalidState,WebSocketDisconnect) as e:
-        print(f"{e}")
+        logger.error(f"{e}")
     finally:
-        print(f"websocket client state : {websocket.client_state}. websocket application state : {websocket.application_state}")
+        logger.info(f"websocket client state : {websocket.client_state}. websocket application state : {websocket.application_state}")
         
         if reset_tracker():
-            print('tracker reset done!')
+            logger.info('tracker reset done!')
         
         if websocket.application_state != websockets.WebSocketState.DISCONNECTED:
             await websocket.close(reason="Normal closure")
         else:
-            print("Connection is already closed!")
+            logger.info("Connection is already closed!")
         cap.release()
         # Clean up temp file
         if os.path.exists(video_path):
