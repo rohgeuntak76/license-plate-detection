@@ -24,6 +24,7 @@ async def process_video_ws_vehicle(websocket: WebSocket, session_id: str):
     data = await websocket.receive_json()
     video_path = data["video_path"]
     conf = data["conf"]
+    classes = data["classes"]
     # Process video
     cap = cv.VideoCapture(video_path)
     fps = cap.get(cv.CAP_PROP_FPS)
@@ -34,11 +35,11 @@ async def process_video_ws_vehicle(websocket: WebSocket, session_id: str):
             frame_num += 1
             ret, frame = cap.read()
             ### limit 10 frame for test purpose
-            # if not ret or frame_num > 10:
-            if not ret :
+            if not ret or frame_num > 20:
+            # if not ret :
                 break
 
-            return_bytes = vehicle_detect_bytes(frame,conf)
+            return_bytes = vehicle_detect_bytes(frame,conf,classes)
             # Send bytes 
             if websocket.application_state != websockets.WebSocketState.DISCONNECTED:
                 await websocket.send_bytes(return_bytes)
@@ -80,8 +81,8 @@ async def process_video_ws_license_plate(websocket: WebSocket, session_id: str):
         while cap.isOpened():
             ret, frame = cap.read()
             ### limit 10 frame for test purpose
-            # if not ret or frame_num > 10:
-            if not ret :
+            if not ret or frame_num > 20:
+            # if not ret :
                 break
             
             frame_num += 1

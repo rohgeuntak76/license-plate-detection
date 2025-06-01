@@ -36,8 +36,8 @@ async def process_video_ws_license_number(websocket: WebSocket, session_id: str)
         while cap.isOpened():
             ret, frame = cap.read()
             ### limit 10 frame for test purpose
-            # if not ret or frame_num > 20:
-            if not ret :
+            if not ret or frame_num > 20:
+            # if not ret :
                 break
             
             frame_num += 1
