@@ -21,7 +21,7 @@ license_detector = YOLO(MODEL_ENDPOINT + LICENSE_MODEL_NAME, task='detect')
 plate_reader = easyocr.Reader(['en'],gpu=False)
 vehicles_id = [2,3,5,7]
 
-def vehicle_detect_bytes(image,conf: float = 0.25):
+def vehicle_detect_bytes(image,conf: float = 0.25,classes: list = vehicles_id):
     # if getattr(vehicle_detector,'predictor',None) is not None:
     #     print('Yolo have Predictor!!!!')
     #     if getattr(vehicle_detector.predictor,'trackers',None) is not None:
@@ -30,7 +30,7 @@ def vehicle_detect_bytes(image,conf: float = 0.25):
     #         print("Tracker does not exists!!!!")
     # else:
     #     print("Yolo does not have Predictor!!!")
-    results = vehicle_detector(image,conf=conf,classes=vehicles_id)
+    results = vehicle_detector(image,conf=conf,classes=classes)
     prediction = results[0].plot()
     return_bytes = get_bytes_from_prediction(prediction,quality=95)
     return return_bytes
