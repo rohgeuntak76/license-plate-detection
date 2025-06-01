@@ -194,11 +194,11 @@ class Inference:
         
         selected_model = self.st.sidebar.selectbox("Model", available_models)
 
-        with self.st.spinner("Model is loading..."):
+        # with self.st.spinner("Model is loading..."):
             # self.model_dir = "../inference/models"
-            self.model = YOLO(f"{selected_model.lower()}",task='detect')  # Load the YOLO model
-            class_names = list(self.model.names.values())  # Convert dictionary to list of class names
-            self.model_load = self.st.success("Model loaded successfully!")
+        self.model = YOLO(f"{selected_model.lower()}",task='detect')  # Load the YOLO model
+        class_names = list(self.model.names.values())  # Convert dictionary to list of class names
+        # self.model_load = self.st.success("Model loaded successfully!")
         
         # Multiselect box with class names and get indices of selected classes
         if len(class_names) > 1:
@@ -206,7 +206,7 @@ class Inference:
         else:
             self.selected_classes = self.st.sidebar.multiselect("Classes", class_names, default=class_names[:3])
         self.selected_ind = [class_names.index(option) for option in self.selected_classes]
-
+        LOGGER.info(f"Selected Classes : {self.selected_ind}")
         if not isinstance(self.selected_ind, list):  # Ensure selected_options is a list
             self.selected_ind = list(self.selected_ind)
 
@@ -241,7 +241,7 @@ class Inference:
             side_left, side_right = self.st.sidebar.columns(2)
 
             if side_left.button("Start",use_container_width=True):
-                self.model_load.empty()   
+                # self.model_load.empty()   
                 side_right.button("Clear",use_container_width=True)  # Button to stop the inference
                 if self.source == "Image":
                     LOGGER.info(f"Selected Classes : {self.selected_classes}")
@@ -256,7 +256,9 @@ class Inference:
                     data = {
                         'conf': f'{self.vehicle_conf}'
                     }
-                    response = requests.post(url,files=files,data=data,stream=True)
+                    params = [('classes', str(n)) for n in self.selected_ind]
+
+                    response = requests.post(url,files=files,data=data,params=params,stream=True)
                     annotated_result = io.BytesIO(response.content)
 
                     self.ann_frame.image(annotated_result)
