@@ -8,6 +8,9 @@ from utils.model_info import model_info
 from utils.upload_files import upload_video
 from utils.logging import logger
 
+import torch
+torch.classes.__path__ = [] # To resolve -> Tried to instantiate class ‘__path__._path’, but it does not exist! Ensure that it is registered via torch::class_
+
 class Inference:
     """
     A class to perform object detection, image classification, image segmentation and pose estimation inference.
