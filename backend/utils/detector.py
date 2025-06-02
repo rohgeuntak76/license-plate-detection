@@ -16,9 +16,9 @@ MODEL_ENDPOINT = config["detectors"]["server_url"]
 VEHICLE_MODEL_NAME = config["detectors"]["vehicle_detector"]
 LICENSE_MODEL_NAME = config["detectors"]["license_detector"]
 
-vehicle_detector = YOLO(MODEL_ENDPOINT + VEHICLE_MODEL_NAME, task='detect')
-vehicle_tracker = YOLO(MODEL_ENDPOINT + VEHICLE_MODEL_NAME, task='detect')
-license_detector = YOLO(MODEL_ENDPOINT + LICENSE_MODEL_NAME, task='detect')
+vehicle_detector = YOLO(MODEL_ENDPOINT + '/' + VEHICLE_MODEL_NAME, task='detect')
+vehicle_tracker = YOLO(MODEL_ENDPOINT + '/' + VEHICLE_MODEL_NAME, task='detect')
+license_detector = YOLO(MODEL_ENDPOINT + '/' + LICENSE_MODEL_NAME, task='detect')
 plate_reader = easyocr.Reader(['en'],gpu=False)
 vehicles_id = [2,3,5,7]
 

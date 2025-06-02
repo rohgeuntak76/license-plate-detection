@@ -38,4 +38,4 @@ def return_model_info():
     VEHICLE_MODEL_NAME = config["detectors"]["vehicle_detector"]
     LICENSE_MODEL_NAME = config["detectors"]["license_detector"]
     
-    return ModelInfo(VEHICLE_MODEL_NAME=MODEL_ENDPOINT + VEHICLE_MODEL_NAME, LICENSE_MODEL_NAME=MODEL_ENDPOINT + LICENSE_MODEL_NAME)
+    return ModelInfo(VEHICLE_MODEL_NAME=MODEL_ENDPOINT + '/' + VEHICLE_MODEL_NAME, LICENSE_MODEL_NAME=MODEL_ENDPOINT + '/' + LICENSE_MODEL_NAME)

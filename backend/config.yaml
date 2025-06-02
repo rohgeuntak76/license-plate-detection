@@ -4,7 +4,7 @@
 #   vehicle_detector : "vehicle_detector" # yolo11s.pt
 #   license_detector : "license_detector" # yolo11s_20epochs_best.pt
 detectors:
-  server_url: "./models/"
+  server_url: "./models"
   server_token: ""
   vehicle_detector : "yolo11s.pt" 
   license_detector : "yolo11s_20epochs_best.pt"
