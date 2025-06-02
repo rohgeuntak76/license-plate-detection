@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: frontend-appconfig
+  labels:
+    {{- include "lp-number-detection.labels" . | nindent 4 }}
+data:
+  config.yaml: |-
+    {{ toYaml .Values.frontend.appConfig | nindent 4 | trim }}
