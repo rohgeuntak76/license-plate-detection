@@ -2,6 +2,7 @@ inputs/
 tests/simple/*.pt
 backend/models/yolo11n.pt
 backend/models/yolo11s.pt
+backend/.EasyOCR
 finetune/yolo11*.pt
 models/yolo11s.pt
 finetune/artifact_downloads
