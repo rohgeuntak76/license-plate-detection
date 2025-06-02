@@ -1,13 +1,12 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 from ultralytics import YOLO
-from ultralytics.utils import LOGGER
 from ultralytics.utils.checks import check_requirements
+import yaml
 
 from utils.inference import vehicle_detection_image, vehicle_detection_video, license_number_image_infer, license_number_image_visualize, license_number_video_infer, license_number_video_visualize
 from utils.model_info import model_info
 from utils.upload_files import upload_video
-
-import yaml
+from utils.logging import logger
 
 class Inference:
     """
@@ -165,7 +164,7 @@ class Inference:
         else:
             self.selected_classes = self.st.sidebar.multiselect("Classes", class_names, default=class_names[:3])
         self.selected_ind = [class_names.index(option) for option in self.selected_classes]
-        LOGGER.info(f"Selected Classes : {self.selected_ind}")
+        logger.info(f"Selected Classes : {self.selected_ind}")
         if not isinstance(self.selected_ind, list):  # Ensure selected_options is a list
             self.selected_ind = list(self.selected_ind)
 
@@ -237,13 +236,13 @@ class Inference:
 
             if self.st.session_state.stage == 0:
                 self.st.session_state.detection_result = None
-                LOGGER.info(f"Stage 0 : {self.st.session_state}")
+                logger.info(f"Stage 0 : {self.st.session_state}")
             
             if self.st.session_state.stage == 1:
                 if self.source == "Image":
                     response_info_json = license_number_image_infer(self.api_host,self.vid_file,self.vehicle_conf,self.license_conf)
 
-                    LOGGER.info(response_info_json)
+                    logger.info(response_info_json)
                     self.st.session_state.detection_result = response_info_json
                     self.st.dataframe(response_info_json)
                     self.st.button("Visualize",on_click=self.set_state, args=[2])
