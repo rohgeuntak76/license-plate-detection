@@ -77,8 +77,10 @@ async def video_info_ann(websocket: WebSocket):
     video_path = data["video_path"]
     detection_results = data["detection_results"]
     results_df = pd.DataFrame(detection_results)
+    max_frame_num = results_df["frame_number"].max()
     cap = cv.VideoCapture(video_path)
     fps = cap.get(cv.CAP_PROP_FPS)
+    total_frame = cap.get(cv.CAP_PROP_FRAME_COUNT)
     frame_num = -1
 
     try:
@@ -86,8 +88,8 @@ async def video_info_ann(websocket: WebSocket):
             frame_num += 1
             ret, frame = cap.read()
             ### limit 10 frame for test purpose
-            # if not ret or frame_num > 10:
-            if not ret :
+            if not ret or frame_num > max_frame_num:
+            # if not ret :
                 break
             df_ = results_df[results_df['frame_number'] == frame_num]
             for index in range(len(df_)):
@@ -124,7 +126,7 @@ async def video_info_ann(websocket: WebSocket):
         logger.error(f"{e}")
     finally:
         logger.info(f"websocket client state : {websocket.client_state}. websocket application state : {websocket.application_state}")
-      
+        logger.info(f"Inferenced # of Frame : {frame_num} / {total_frame}")
         if websocket.application_state != websockets.WebSocketState.DISCONNECTED:
             await websocket.close(reason="Normal closure")
         else:

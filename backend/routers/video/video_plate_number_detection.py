@@ -26,21 +26,25 @@ async def process_video_ws_license_number(websocket: WebSocket, session_id: str)
     video_path = data["video_path"]
     vehicle_conf = data["vehicle_conf"]
     license_conf = data["license_conf"]
+    ratio = data["ratio"]
+
     
     # Process video
     cap = cv.VideoCapture(video_path)
     fps = cap.get(cv.CAP_PROP_FPS)
+    total_frame = cap.get(cv.CAP_PROP_FRAME_COUNT)
+    thres_frame = total_frame*ratio
     frame_num = -1
 
     try:
         while cap.isOpened():
+            frame_num += 1
             ret, frame = cap.read()
             ### limit 10 frame for test purpose
-            if not ret or frame_num > 20:
+            if not ret or frame_num > thres_frame:
             # if not ret :
                 break
             
-            frame_num += 1
             # Process frame - detect license plates
             detection_results = crop_vehicle_license_then_read(input_image=frame,vehicle_conf=vehicle_conf,license_conf=license_conf,frame_number=frame_num)
             # Convert frame to bytes and send
@@ -54,7 +58,7 @@ async def process_video_ws_license_number(websocket: WebSocket, session_id: str)
         logger.error(f"{e}")
     finally:
         logger.info(f"websocket client state : {websocket.client_state}. websocket application state : {websocket.application_state}")
-        
+        logger.info(f"Inferenced # of Frame : {frame_num} / {total_frame}")
         if reset_tracker():
             logger.info('tracker reset done!')
         

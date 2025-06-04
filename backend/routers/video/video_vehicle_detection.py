@@ -25,9 +25,13 @@ async def process_video_ws_vehicle(websocket: WebSocket, session_id: str):
     video_path = data["video_path"]
     conf = data["conf"]
     classes = data["classes"]
+    ratio = data["ratio"]
+
     # Process video
     cap = cv.VideoCapture(video_path)
     fps = cap.get(cv.CAP_PROP_FPS)
+    total_frame = cap.get(cv.CAP_PROP_FRAME_COUNT)
+    thres_frame = total_frame*ratio
     frame_num = -1
 
     try:
@@ -35,7 +39,7 @@ async def process_video_ws_vehicle(websocket: WebSocket, session_id: str):
             frame_num += 1
             ret, frame = cap.read()
             ### limit 10 frame for test purpose
-            if not ret or frame_num > 20:
+            if not ret or frame_num > thres_frame:
             # if not ret :
                 break
 
@@ -50,7 +54,7 @@ async def process_video_ws_vehicle(websocket: WebSocket, session_id: str):
         logger.error(f"{e}")
     finally:
         logger.info(f"websocket client state : {websocket.client_state}. websocket application state : {websocket.application_state}")
-        
+        logger.info(f"Inferenced # of Frame : {frame_num} / {total_frame}")
         if websocket.application_state != websockets.WebSocketState.DISCONNECTED:
             await websocket.close(reason="Normal closure")
         else:
@@ -71,21 +75,24 @@ async def process_video_ws_license_plate(websocket: WebSocket, session_id: str):
     data = await websocket.receive_json()
     video_path = data["video_path"]
     conf = data["conf"]
-    
+    ratio = data["ratio"]
+
     # Process video
     cap = cv.VideoCapture(video_path)
     fps = cap.get(cv.CAP_PROP_FPS)
+    total_frame = cap.get(cv.CAP_PROP_FRAME_COUNT)
+    thres_frame = total_frame*ratio
     frame_num = -1
 
     try:
         while cap.isOpened():
+            frame_num += 1
             ret, frame = cap.read()
             ### limit 10 frame for test purpose
-            if not ret or frame_num > 20:
+            if not ret or frame_num > thres_frame:
             # if not ret :
                 break
             
-            frame_num += 1
             # Process frame - detect license plates
             return_bytes = license_detect_bytes(frame,conf)
             # Convert frame to bytes and send
@@ -98,7 +105,7 @@ async def process_video_ws_license_plate(websocket: WebSocket, session_id: str):
         logger.error(f"{e}")
     finally:
         logger.info(f"websocket client state : {websocket.client_state}. websocket application state : {websocket.application_state}")
-
+        logger.info(f"Inferenced # of Frame : {frame_num} / {total_frame}")
         if websocket.application_state != websockets.WebSocketState.DISCONNECTED:
             await websocket.close(reason="Normal closure")
         else:

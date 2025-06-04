@@ -33,7 +33,7 @@ def vehicle_detection_image(api_host, selected_classes, vid_file,vehicle_conf,se
     return annotated_result
 
 
-def vehicle_detection_video(api_host,sess_id,video_path,selected_classes,vehicle_conf,selected_ind,ann_frame):
+def vehicle_detection_video(api_host,sess_id,video_path,selected_classes,vehicle_conf,selected_ind,ann_frame,video_inference_ratio):
     # import websocket
     if selected_classes[0] == 'License_Plate':
         ws_url = f"ws://{api_host}/api/video/ws/license_plate/"
@@ -48,7 +48,7 @@ def vehicle_detection_video(api_host,sess_id,video_path,selected_classes,vehicle
     )
 
     # Send video path to backend
-    ws.on_open = lambda ws: ws.send(json.dumps({"video_path": video_path,"conf":vehicle_conf,"classes":selected_ind}))
+    ws.on_open = lambda ws: ws.send(json.dumps({"video_path": video_path,"conf":vehicle_conf,"classes":selected_ind,"ratio":video_inference_ratio}))
     ws.run_forever()
 
 def license_number_image_infer(api_host,vid_file,vehicle_conf,license_conf):
@@ -78,7 +78,7 @@ def license_number_image_visualize(api_host,vid_file,detection_result):
     annotated_result = io.BytesIO(response.content)
     return annotated_result
 
-def license_number_video_infer(api_host,sess_id,video_path,vehicle_conf,license_conf):
+def license_number_video_infer(api_host,sess_id,video_path,vehicle_conf,license_conf,video_inference_ratio):
     results_list = []
     result_df = st.dataframe(pd.DataFrame(columns=("frame_number","track_id","vehicle_bbox","vehicle_bbox_score","lp_bbox","lp_bbox_score","lp_number","lp_text_score")),hide_index=True)
     ws = websocket.WebSocketApp(
@@ -88,7 +88,7 @@ def license_number_video_infer(api_host,sess_id,video_path,vehicle_conf,license_
         on_close=lambda ws,status,msg: st.info(f"Processing complete. code {status} : {msg}")
     )
     # Send video path to backend
-    ws.on_open = lambda ws: ws.send(json.dumps({"video_path": video_path,"vehicle_conf": vehicle_conf,"license_conf":license_conf}))
+    ws.on_open = lambda ws: ws.send(json.dumps({"video_path": video_path,"vehicle_conf": vehicle_conf,"license_conf":license_conf,"ratio":video_inference_ratio}))
     ws.run_forever()
     return results_list
 

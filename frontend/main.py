@@ -21,6 +21,7 @@ class Inference:
     Attributes:
         st (module): Streamlit module for UI creation.
         source (str): Selected type of input source (image or video file).
+        video_inference_ratio(int): Percentage of video frames to process for inference
         vehicle_conf (float): Confidence threshold for detection.
         license_conf (float): Confidence threshold for detection.
         iou (float): IoU threshold for non-maximum suppression.
@@ -63,7 +64,8 @@ class Inference:
         import streamlit as st
 
         self.st = st  # Reference to the Streamlit module
-        self.source = None  # Video source selection (webcam or video file)
+        self.source = None  # Input source type selection (image or video file)
+        self.video_inference_ratio = 0.2
         self.vehicle_conf = 0.25
         self.license_conf = 0.25
         self.iou = 0.45  # Intersection-over-Union (IoU) threshold for non-maximum suppression
@@ -147,6 +149,7 @@ class Inference:
                 self.vid_file = self.st.sidebar.file_uploader("Upload Video File", type=["mp4", "mov", "avi", "mkv"],on_change=self.set_state,args=[0])
                 if self.vid_file is not None:
                     self.org_frame.video(self.vid_file,muted=True)    
+                    self.video_inference_ratio = float(self.st.sidebar.slider("Video length Ratio for Inference",0.0,1.0,self.video_inference_ratio,0.01,on_change=self.set_state,args=[0]))
                     
             elif self.source == "Image":
                 self.vid_file = self.st.sidebar.file_uploader("Upload Image File", type=["jpeg", "png"],on_change=self.set_state,args=[0])
@@ -226,7 +229,8 @@ class Inference:
                         self.selected_classes,
                         self.vehicle_conf,
                         self.selected_ind,
-                        self.ann_frame
+                        self.ann_frame,
+                        self.video_inference_ratio,
                     )
                         
         elif self.usecase == 'License Number Detection':
@@ -258,7 +262,8 @@ class Inference:
                         sess_id,
                         video_path,
                         self.vehicle_conf,
-                        self.license_conf
+                        self.license_conf,
+                        self.video_inference_ratio
                     )
               
                     self.st.session_state.detection_result = results_list
