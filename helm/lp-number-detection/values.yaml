@@ -7,7 +7,7 @@ frontend:
   replicaCount: 1
   name: frontend
   image:
-    repository: geuntakroh/lp-number-front
+    repository: geuntakroh/lp-number-frontend
     pullPolicy: IfNotPresent
     # Overrides the image tag whose default is the chart appVersion.
     tag: "v0.1"
