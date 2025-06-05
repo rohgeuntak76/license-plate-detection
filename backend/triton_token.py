@@ -60,7 +60,7 @@ class TritonRemoteModel:
         self.endpoint = endpoint
         self.url = url
         ### Read config.yaml and Get the Token and Set the http header
-        with open("/Users/geuntakroh/workspace/github/license-plate-detection/inference/config.yaml", "r") as f:
+        with open("/app/config.yaml", "r") as f:
             config = yaml.safe_load(f)
             TOKEN = config["detectors"]["server_token"]
 
