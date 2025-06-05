@@ -256,17 +256,18 @@ class Inference:
 
                 elif self.source == "Video":
                     sess_id, video_path = upload_video(self.api_host,self.vid_file)
-
-                    results_list = license_number_video_infer(
-                        self.api_host,
-                        sess_id,
-                        video_path,
-                        self.vehicle_conf,
-                        self.license_conf,
-                        self.video_inference_ratio
-                    )
+                    with self.st.spinner("Wait for Inferencing...", show_time=True):
+                        results_list = license_number_video_infer(
+                            self.api_host,
+                            sess_id,
+                            video_path,
+                            self.vehicle_conf,
+                            self.license_conf,
+                            self.video_inference_ratio
+                        )
               
                     self.st.session_state.detection_result = results_list
+                    self.st.dataframe(self.st.session_state.detection_result)
                     self.st.button("Visualize",on_click=self.set_state, args=[2])
 
             if self.st.session_state.stage == 2:
