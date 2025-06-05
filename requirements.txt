@@ -1,5 +1,5 @@
 opencv-python==4.11.0.86 
-ultralytics==8.3.111 
+ultralytics==8.3.77
 ultralytics-thop==2.0.1
 lab==5.1
 fastapi==0.115.12
