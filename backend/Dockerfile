@@ -10,6 +10,10 @@ COPY . .
 
 RUN pip install --no-cache-dir --upgrade -r requirements.txt
 
+# patch triton util. ( read token value from config.yaml and set the header )
+COPY ./triton_token.py /usr/local/lib/python3.11/site-packages/ultralytics/utils/triton.py
+
+
 ENV EASYOCR_MODULE_PATH="/app/.EasyOCR"
 
 EXPOSE 8000
