@@ -52,7 +52,8 @@ async def process_video_ws_license_number(websocket: WebSocket, session_id: str)
                 await websocket.send_json(detection_results)
     
             # # Control processing rate to not overwhelm the connection ( without this sleep, dataframe visualize and interrupt inference won't work)
-            await asyncio.sleep(1/fps)
+            # await asyncio.sleep(1/fps)
+            await asyncio.sleep(0.1)
 
     except (InvalidState,WebSocketDisconnect) as e:
         logger.error(f"{e}")

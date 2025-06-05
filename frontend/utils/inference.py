@@ -4,15 +4,20 @@ import io
 import websocket
 import streamlit as st
 import pandas as pd
+from utils.logging import logger  
 
 def display_frame(frame_bytes,ann_frame):
+    logger.info("display frame function called")
     image = io.BytesIO(frame_bytes) # Convert bytes to image
     ann_frame.image(image) # Update the placeholder
+    logger.info("display frame Done!")
 
 def display_dataframe(detection_results,results_list,result_df):
+    logger.info("display dataframe function called")
     results_json = json.loads(detection_results)
     result_df.add_rows(results_json)
     results_list.extend(results_json) # update list
+    logger.info("display dataframe Done!")
 
 def vehicle_detection_image(api_host, selected_classes, vid_file,vehicle_conf,selected_ind):
     if selected_classes[0] == 'License_Plate': # license plate detection usecase

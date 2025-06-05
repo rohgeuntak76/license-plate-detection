@@ -121,7 +121,8 @@ async def video_info_ann(websocket: WebSocket):
                         await websocket.send_bytes(return_bytes)
     
                     # Control processing rate to not overwhelm the connection
-                    await asyncio.sleep(1/fps)
+                    # await asyncio.sleep(1/fps)
+                    await asyncio.sleep(0.1)
     except (InvalidState,WebSocketDisconnect) as e:
         logger.error(f"{e}")
     finally:
