@@ -54,7 +54,7 @@ def image_info_ann(image: UploadFile,item_json: str = Form()):
                 6
             )   
     
-    return_bytes = get_bytes_from_prediction(input_image,quality=95)
+    return_bytes = get_bytes_from_prediction(input_image,quality=65)
     # return_bytes.seek(0)
     return StreamingResponse(content=return_bytes,media_type="image/jpeg")
 
@@ -116,7 +116,7 @@ async def video_info_ann(websocket: WebSocket):
                             (0, 255, 0),
                             6
                         )
-                    return_bytes = get_bytes_from_prediction(frame,quality=95)
+                    return_bytes = get_bytes_from_prediction(frame,quality=65)
                     if websocket.application_state != websockets.WebSocketState.DISCONNECTED:
                         await websocket.send_bytes(return_bytes)
     

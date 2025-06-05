@@ -36,7 +36,7 @@ def vehicle_detect_bytes(image,conf: float = 0.25,classes: list = vehicles_id):
     """
     results = vehicle_detector(image,conf=conf,classes=classes)
     prediction = results[0].plot()
-    return_bytes = get_bytes_from_prediction(prediction,quality=95)
+    return_bytes = get_bytes_from_prediction(prediction,quality=65)
     return return_bytes
 
 def license_detect_bytes(image,conf: float = 0.25):
@@ -52,7 +52,7 @@ def license_detect_bytes(image,conf: float = 0.25):
     """
     results = license_detector(image,conf=conf)
     prediction = results[0].plot()
-    return_bytes = get_bytes_from_prediction(prediction,quality=95)
+    return_bytes = get_bytes_from_prediction(prediction,quality=65)
     return return_bytes
 
 def license_detect_number(image):

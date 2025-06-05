@@ -50,7 +50,7 @@ async def process_video_ws_vehicle(websocket: WebSocket, session_id: str):
     
             # # Control processing rate to not overwhelm the connection
             # await asyncio.sleep(1/fps)
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(0.05)
     except (InvalidState,WebSocketDisconnect) as e:
         logger.error(f"{e}")
     finally:
@@ -102,7 +102,7 @@ async def process_video_ws_license_plate(websocket: WebSocket, session_id: str):
     
             # # Control processing rate to not overwhelm the connection
             # await asyncio.sleep(1/fps)
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(0.05)
     except (InvalidState,WebSocketDisconnect) as e:
         logger.error(f"{e}")
     finally:
