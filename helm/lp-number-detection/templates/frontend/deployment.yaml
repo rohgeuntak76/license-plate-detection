@@ -5,9 +5,7 @@ metadata:
   labels:
     {{- include "lp-number-detection.labels" . | nindent 4 }}
 spec:
-  {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
-  {{- end }}
   selector:
     matchLabels:
       {{- include "lp-number-detection.selectorLabels" . | nindent 6 }}
