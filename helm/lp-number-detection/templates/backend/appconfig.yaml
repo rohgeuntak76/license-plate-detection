@@ -6,4 +6,8 @@ metadata:
     {{- include "lp-number-detection-backend.labels" . | nindent 4 }}
 data:
   config.yaml: |-
-    {{ toYaml .Values.backend.appConfig | nindent 4 | trim }}
+    detectors:
+      server_url : {{ include "lp-number-detection-detectors.serverUrl" . }}
+      server_token : {{ .Values.backend.appConfig.detectors.server_token }} 
+      vehicle_detector : {{ .Values.backend.appConfig.detectors.vehicle_detector }} 
+      license_detector : {{ .Values.backend.appConfig.detectors.license_detector }} 
