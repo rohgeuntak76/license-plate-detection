@@ -15,7 +15,7 @@ Option 3 : MLIS
 {{- if eq .Values.backend.appConfig.detectors.option "embedded" }}
 {{- "./models" }}
 {{- else if eq .Values.backend.appConfig.detectors.option "kserve" }}
-{{- printf "%s%s-%s.%s.%s" "http://" (include "lp-number-detection-isvc.fullname" .) "predictor" .Release.Namespace "svc.cluster.local"| trimSuffix "-" -}}
+{{- printf "%s%s-%s.%s.%s" "http://" (include "lp-number-detection-isvc.fullname" .) "predictor-00001" .Release.Namespace "svc.cluster.local"| trimSuffix "-" -}}
 {{- else if eq .Values.backend.appConfig.detectors.option "mlis" }}
 {{- printf "%s%s-%s.%s.%s" "http://" (.Values.backend.appConfig.detectors.mlis_deployment_name) "predictor" (.Values.backend.appConfig.detectors.mlis_deployment_namespace) "svc.cluster.local"| trimSuffix "-" -}}
 {{- end }}
