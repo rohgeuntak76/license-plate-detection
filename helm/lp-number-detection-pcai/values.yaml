@@ -1,0 +1,163 @@
+# Default values for lp-number-detection.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+ezua:
+  virtualService:
+    endpoint: "lp-number-detection.${DOMAIN_NAME}"
+    istioGateway: "istio-system/ezaf-gateway"
+
+inferenceService:
+  enabled: false
+  image: "nvcr.io/nvidia/tritonserver:25.02-py3"
+  modelFormat: "triton"
+  runtime: kserve-tritonserver-ngc
+  storageUri: "" # e.g. s3://mlflow.sy6s171r10/16/3c729e661678484fa6048ca2dead4dfe/artifacts/triton/triton_engines
+  storageCredential: "" # mlflow s3 bucket credential
+  resources:
+    limits:
+      nvidia.com/gpu: 1
+    requests:
+      nvidia.com/gpu: 1
+
+frontend:
+  replicaCount: 1
+  name: frontend
+  image:
+    repository: geuntakroh/lp-number-frontend
+    pullPolicy: IfNotPresent
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: "v1.0"
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 8501
+  # Configure config.yaml values. It will be created as configMap and will be mounted at application's config.yaml file
+  appConfig:
+    logo_url : "assets/hpe_pri_grn_pos_rgb.png"
+  # Additional volumes on the output Deployment definition.
+  volumes: 
+    - name: config-volume
+      configMap:
+        items:
+        - key: config.yaml
+          path: config.yaml
+        name: frontend-appconfig
+  volumeMounts: 
+    - name: config-volume
+      mountPath: /app/config.yaml
+      subPath: config.yaml
+  livenessProbe:
+    httpGet:
+      path: /
+      port: http
+  readinessProbe:
+    httpGet:
+      path: /
+      port: http
+  resources:
+    requests:
+      cpu: 2
+      memory: 4Gi
+    limits:
+      cpu: 4
+      memory: 8Gi
+
+backend:
+  replicaCount: 1
+  name: backend
+  image:
+    repository: geuntakroh/lp-number-backend
+    pullPolicy: IfNotPresent
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: "v1.0"
+  
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 8000
+
+  appConfig:
+    detectors: 
+      option : "embedded" # Option 1 ( "embedded" ) : Embedded Model
+      server_token: ""
+      vehicle_detector : "yolo11s.pt" 
+      license_detector : "yolo11s_20epochs_best.pt"
+      
+      # option : kserve # Option 2 ( "kserve" ): Kserve in this Helm
+      # server_token: ""
+      # vehicle_detector : "vehicle_detector" 
+      # license_detector : "license_detector"
+      
+      # option : mlis # Option 3 (mlis): MLIS 
+      # mlis_deployment_name : "triton-test"
+      # mlis_deployment_namespace : "myname"
+      # server_token: "abcd"
+      # vehicle_detector : "vehicle_detector" 
+      # license_detector : "license_detector"
+
+  # Additional volumes on the output Deployment definition.
+  volumes: 
+    - name: config-volume
+      configMap:
+        items:
+        - key: config.yaml
+          path: config.yaml
+        name: backend-appconfig
+  volumeMounts: 
+    - name: config-volume
+      mountPath: /app/config.yaml
+      subPath: config.yaml
+  resources:
+    requests:
+      cpu: 2
+      memory: 4Gi
+    limits:
+      cpu: 4
+      memory: 8Gi
+
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Automatically mount a ServiceAccount's API credentials?
+  automount: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext: {}
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

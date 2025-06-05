@@ -1,0 +1,18 @@
+{{- if .Values.inferenceService.enabled -}}
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: {{ include "lp-number-detection-isvc.fullname" . }}
+spec:
+  predictor:
+    serviceAccountName: {{ include "lp-number-detection-isvc.serviceAccountName" . }}
+    model:
+      modelFormat:
+        name: {{ .Values.inferenceService.modelFormat }}
+      storageUri: {{ .Values.inferenceService.storageUri }}
+      runtime: kserve-tritonserver-ngc
+      resources:
+        {{- toYaml .Values.inferenceService.resources | nindent 8 }}
+{{- end }}
+
+        

@@ -1,0 +1,56 @@
+{{- if .Values.inferenceService.enabled -}}
+apiVersion: serving.kserve.io/v1alpha1
+kind: ServingRuntime
+metadata:
+  generation: 1
+  name: {{ .Values.inferenceService.runtime }}
+  annotations:
+    helm.sh/hook: "pre-install"
+spec:
+  annotations:
+    prometheus.kserve.io/path: /metrics
+    prometheus.kserve.io/port: "8002"
+  containers:
+  - args:
+    - tritonserver
+    - --model-store=/mnt/models
+    - --grpc-port=9000
+    - --http-port=8080
+    - --allow-grpc=true
+    - --allow-http=true
+    image: {{ .Values.inferenceService.image }}
+    name: kserve-container
+    resources:
+      limits:
+        cpu: "2"
+        memory: 4Gi
+      requests:
+        cpu: "2"
+        memory: 4Gi
+  protocolVersions:
+  - v2
+  - grpc-v2
+  supportedModelFormats:
+  - autoSelect: true
+    name: tensorrt
+    priority: 1
+    version: "8"
+  - autoSelect: true
+    name: tensorflow
+    priority: 1
+    version: "1"
+  - autoSelect: true
+    name: tensorflow
+    priority: 1
+    version: "2"
+  - autoSelect: true
+    name: onnx
+    priority: 1
+    version: "1"
+  - name: pytorch
+    version: "1"
+  - autoSelect: true
+    name: triton
+    priority: 1
+    version: "2"
+{{- end }}
