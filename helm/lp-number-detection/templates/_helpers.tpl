@@ -8,6 +8,13 @@ Expand the name of the chart.
 {{- printf "%s-%s" (include "lp-number-detection.name" .) .Values.backend.name | trunc 63 | trimSuffix "-" -}}
 {{- end }}
 
+{{- define "lp-number-detection-isvc.name" -}}
+{{- if .Values.inferenceService.enabled }}
+{{- printf "%s-%s" (include "lp-number-detection.name" .) .Values.inferenceService.modelFormat | trunc 63 | trimSuffix "-" -}}
+{{- end }}
+{{- end }}
+
+
 {{/*
 Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
@@ -28,6 +35,12 @@ If release name contains chart name it will be used as a full name.
 
 {{- define "lp-number-detection-backend.fullname" -}}
 {{- printf "%s-%s" (include "lp-number-detection.fullname" .) .Values.backend.name | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+{{- define "lp-number-detection-isvc.fullname" -}}
+{{- if .Values.inferenceService.enabled }}
+{{- printf "%s-%s" (include "lp-number-detection.fullname" .) .Values.inferenceService.modelFormat | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
 {{- end -}}
 
 {{/*
@@ -69,6 +82,19 @@ app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end }}
 
+{{/*
+inferenceService labels
+*/}}
+{{- define "lp-number-detection-isvc.labels" -}}
+helm.sh/chart: {{ include "lp-number-detection.chart" . }}
+{{ include "lp-number-detection-backend.selectorLabels" . }}
+{{- if .Chart.AppVersion }}
+app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+{{- end }}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- end }}
+
+
 
 {{/*
 Selector labels for backend
@@ -79,7 +105,7 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*
-Create the name of the service account to use
+Create the name of the service account for frontend
 */}}
 {{- define "lp-number-detection.serviceAccountName" -}}
 {{- if .Values.serviceAccount.create }}
@@ -90,7 +116,7 @@ Create the name of the service account to use
 {{- end }}
 
 {{/*
-Create the name of the service account to use
+Create the name of the service account for backend
 */}}
 {{- define "lp-number-detection-backend.serviceAccountName" -}}
 {{- if .Values.serviceAccount.create }}
@@ -98,4 +124,11 @@ Create the name of the service account to use
 {{- else }}
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
+{{- end }}
+
+{{/*
+Create the name of the service account for inferenceService
+*/}}
+{{- define "lp-number-detection-isvc.serviceAccountName" }}
+{{- include "lp-number-detection-isvc.fullname" . }}
 {{- end }}
