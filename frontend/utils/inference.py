@@ -9,9 +9,12 @@ import time
 
 def display_frame(frame_bytes,ann_frame,results_frame):
     logger.info("display frame function called")
-    image = io.BytesIO(frame_bytes) # Convert bytes to image
-    results_frame.append(image)
+    # print(type(frame_bytes))
+    # image = io.BytesIO(frame_bytes) # Convert bytes to image
+    # results_frame.append(image)
     # ann_frame.image(image) # Update the placeholder
+    results_frame.append(frame_bytes)
+    ann_frame.image(frame_bytes) # Update the placeholder
     logger.info("display frame Done!")
 
 # def display_dataframe(detection_results,results_list,result_df):
@@ -41,6 +44,29 @@ def vehicle_detection_image(api_host, selected_classes, vid_file,vehicle_conf,se
     return annotated_result
 
 
+def vehicle_detection_video_file(api_host,sess_id,video_path,output_path,selected_classes,vehicle_conf,selected_ind,ann_frame,video_inference_ratio):
+    if selected_classes[0] == 'License_Plate':
+        url = f"http://{api_host}/api/video/vehicles/detect/annotatedVideo"
+    else:
+        url = f"http://{api_host}/api/video/vehicles/detect/annotatedVideo"
+    
+    data = {
+        'video_path' : f'{video_path}',
+        'output_path' : f'{output_path}',
+        'conf': f'{vehicle_conf}',
+        'ratio': f'{video_inference_ratio}',
+    }
+    
+    params = [('classes', str(n)) for n in selected_ind]
+    response = requests.post(url,data=data,params=params,stream=True)
+    if response.status_code == 200:
+        logger.info("Video download Done!!")
+        annotated_result = io.BytesIO(response.content)
+        return annotated_result
+    else:
+        return
+
+
 def vehicle_detection_video(api_host,sess_id,video_path,selected_classes,vehicle_conf,selected_ind,ann_frame,video_inference_ratio):
     # import websocket
     if selected_classes[0] == 'License_Plate':
@@ -62,7 +88,7 @@ def vehicle_detection_video(api_host,sess_id,video_path,selected_classes,vehicle
         ws.run_forever()
     for frame in results_frame:
         ann_frame.image(frame)
-        time.sleep(0.02)
+        time.sleep(0.1)
 
 def license_number_image_infer(api_host,vid_file,vehicle_conf,license_conf):
     files = {
@@ -123,4 +149,4 @@ def license_number_video_visualize(api_host,sess_id,video_path,detection_result,
 
     for frame in results_frame:
         ann_frame.image(frame)
-        time.sleep(0.02)
+        time.sleep(0.1)

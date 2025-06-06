@@ -2,10 +2,11 @@
 from ultralytics import YOLO
 from ultralytics.utils.checks import check_requirements
 import yaml
+import io
 
-from utils.inference import vehicle_detection_image, vehicle_detection_video, license_number_image_infer, license_number_image_visualize, license_number_video_infer, license_number_video_visualize
+from utils.inference import vehicle_detection_image, vehicle_detection_video_file, vehicle_detection_video, license_number_image_infer, license_number_image_visualize, license_number_video_infer, license_number_video_visualize
 from utils.model_info import model_info
-from utils.upload_files import upload_video
+from utils.file_request import upload_video, delete_video
 from utils.logging import logger
 
 import torch
@@ -220,18 +221,35 @@ class Inference:
                 elif self.source == "Video":
                     # Upload Video
                     sess_id, video_path = upload_video(self.api_host,self.vid_file)
-
+                    output_path = 'out_' + video_path
                     # Do inference
-                    vehicle_detection_video(
-                        self.api_host,
-                        sess_id,
-                        video_path,
-                        self.selected_classes,
-                        self.vehicle_conf,
-                        self.selected_ind,
-                        self.ann_frame,
-                        self.video_inference_ratio,
-                    )
+                    # vehicle_detection_video(
+                    #     self.api_host,
+                    #     sess_id,
+                    #     video_path,
+                    #     self.selected_classes,
+                    #     self.vehicle_conf,
+                    #     self.selected_ind,
+                    #     self.ann_frame,
+                    #     self.video_inference_ratio,
+                    # )
+                    with self.st.spinner("Wait for Inferencing...", show_time=True):
+                        annotated_result = vehicle_detection_video_file(
+                                self.api_host,
+                                sess_id,
+                                video_path,
+                                output_path,
+                                self.selected_classes,
+                                self.vehicle_conf,
+                                self.selected_ind,
+                                self.ann_frame,
+                                self.video_inference_ratio,
+                        )
+                    
+                    self.ann_frame.video(annotated_result,autoplay=True)
+                    message, success = delete_video(self.api_host,video_path,output_path)
+                    logger.info(f"{message}")
+    
                         
         elif self.usecase == 'License Number Detection':
             self.license_sidebar()
