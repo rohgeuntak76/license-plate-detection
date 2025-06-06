@@ -47,11 +47,11 @@ def vehicle_detection_image(api_host, selected_classes, vid_file,vehicle_conf,se
 
 def vehicle_detection_video_file(api_host,sess_id,video_path,output_path,selected_classes,vehicle_conf,selected_ind,ann_frame,video_inference_ratio):
     if selected_classes[0] == 'License_Plate':
-        url = f"http://{api_host}/api/video/vehicles/detect/annotatedVideo"
+        url = f"http://{api_host}/api/video/plates/detect/annotatedVideo"
     else:
         url = f"http://{api_host}/api/video/vehicles/detect/annotatedVideo"
     
-    data = {
+    payload = {
         'video_path' : f'{video_path}',
         'output_path' : f'{output_path}',
         'conf': f'{vehicle_conf}',
@@ -59,7 +59,7 @@ def vehicle_detection_video_file(api_host,sess_id,video_path,output_path,selecte
     }
     
     params = [('classes', str(n)) for n in selected_ind]
-    response = requests.post(url,data=data,params=params,stream=True)
+    response = requests.post(url,json=payload,params=params,stream=True)
     if response.status_code == 200:
         logger.info("Video download Done!!")
         annotated_result = io.BytesIO(response.content)

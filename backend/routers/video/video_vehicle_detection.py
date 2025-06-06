@@ -13,11 +13,67 @@ from fastapi.responses import StreamingResponse, FileResponse
 from fastapi import UploadFile, Form, Query
 import uuid
 import numpy as np
+from pydantic import BaseModel
 
+
+class inferenceRequest(BaseModel):
+    video_path: str
+    output_path: str
+    conf: float = 0.25
+    ratio: float = 0.25
 
 router = APIRouter(
     prefix="/api/video",
 )   
+
+@router.post(
+    "/plates/detect/annotatedVideo",
+    tags=["Plates Detection"],
+    response_class=StreamingResponse,
+    summary="Detect license plates in Video",
+    description="Get Traffic Video, Return Annotated Video",
+)
+def process_video_post_plate(inferencerequest : inferenceRequest,classes: list[int] = Query()):
+    '''
+    Does not Use Tracker
+    '''
+    video_path = inferencerequest.video_path
+    output_path = inferencerequest.output_path
+    conf = inferencerequest.conf
+    ratio = inferencerequest.ratio
+
+    # Process video
+    cap = cv.VideoCapture(video_path)
+    fps = cap.get(cv.CAP_PROP_FPS)
+    
+    fourcc = cv.VideoWriter_fourcc(*'avc1')  # Specify the codec
+    width = int(cap.get(cv.CAP_PROP_FRAME_WIDTH))
+    height = int(cap.get(cv.CAP_PROP_FRAME_HEIGHT))
+    out = cv.VideoWriter(output_path, fourcc, fps, (width, height))
+
+
+    total_frame = cap.get(cv.CAP_PROP_FRAME_COUNT)
+    thres_frame = total_frame * ratio
+    frame_num = -1
+
+    while cap.isOpened():
+        frame_num += 1
+        ret, frame = cap.read()
+        ### limit 10 frame for test purpose
+        if not ret or frame_num > thres_frame:
+        # if not ret :
+            break
+
+        return_bytes = license_detect_bytes(frame,conf,classes)
+        # Read bytes -> convert to cv image -> write
+        image_np = np.frombuffer(return_bytes.read(), np.uint8)
+        input_image = cv.imdecode(image_np, cv.IMREAD_COLOR) 
+        out.write(input_image)
+
+    out.release()
+    cap.release()
+
+    return FileResponse(output_path,media_type="video/mp4")
 
 @router.post(
     "/vehicles/detect/annotatedVideo",
@@ -26,11 +82,14 @@ router = APIRouter(
     summary="Detect Vehicles in Video",
     description="Get Traffic Video, Return Annotated Video",
 )
-def process_video_post_vehicle(video_path: str = Form(),output_path: str = Form(), conf: float = Form(0.25),ratio: float = Form(0.20),classes: list[int] = Query()):
+def process_video_post_vehicle(inferencerequest : inferenceRequest,classes: list[int] = Query()):
     '''
     Does not Use Tracker
     '''
-
+    video_path = inferencerequest.video_path
+    output_path = inferencerequest.output_path
+    conf = inferencerequest.conf
+    ratio = inferencerequest.ratio
     # Process video
     cap = cv.VideoCapture(video_path)
     fps = cap.get(cv.CAP_PROP_FPS)
