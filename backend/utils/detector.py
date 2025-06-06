@@ -22,6 +22,11 @@ license_detector = YOLO(MODEL_ENDPOINT + '/' + LICENSE_MODEL_NAME, task='detect'
 plate_reader = easyocr.Reader(['en'],gpu=False)
 vehicles_id = [2,3,5,7]
 
+def get_model_names():
+    vehicle_detector_names = vehicle_detector.names
+    license_detector_names = license_detector.names
+    return vehicle_detector_names, license_detector_names
+
 def vehicle_detect_bytes(image,conf: float = 0.25,classes: list = vehicles_id):
     """
     Do Predict, Return the result as Byte format

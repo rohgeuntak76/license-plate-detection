@@ -1,10 +1,10 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
-from ultralytics import YOLO
+# from ultralytics import YOLO
 from ultralytics.utils.checks import check_requirements
 import yaml
 import io
 
-from utils.inference import vehicle_detection_image, vehicle_detection_video_file,license_number_video_visualize_file, vehicle_detection_video, license_number_image_infer, license_number_image_visualize, license_number_video_infer, license_number_video_visualize
+from utils.inference import vehicle_detection_image_file, vehicle_detection_video_file,license_number_video_visualize_file, license_number_image_infer, license_number_image_visualize, license_number_video_infer
 from utils.model_info import model_info
 from utils.file_request import upload_video, delete_video
 from utils.logging import logger
@@ -162,15 +162,22 @@ class Inference:
         available_models = [self.vehicle_detectors, self.license_detectors]
         selected_model = self.st.sidebar.selectbox("Model", available_models)
 
-        model = YOLO(f"{selected_model.lower()}",task='detect')  # Load the YOLO model
-        class_names = list(model.names.values())  # Convert dictionary to list of class names
-        
-        # Multiselect box with class names and get indices of selected classes
-        if len(class_names) > 1:
-            self.selected_classes = self.st.sidebar.multiselect("Classes", class_names, default=[class_names[i] for i in [2,3,5,7]])   
+        # model = YOLO(f"{selected_model.lower()}",task='detect')  # Load the YOLO model
+
+        vehicle_class_names = list(self.vehicle_detectors_names.values())  # Convert dictionary to list of class names
+        license_class_names = list(self.license_detectors_names.values())  # Convert dictionary to list of class names
+        # print(vehicle_class_names)
+        # print(license_class_names)
+        # # print(class_names)
+        # # Multiselect box with class names and get indices of selected classes
+        # # if len(class_names) > 1:
+        if selected_model == available_models[0]:
+            self.selected_classes = self.st.sidebar.multiselect("Classes", vehicle_class_names, default=[vehicle_class_names[i] for i in [2,3,5,7]])   
+            self.selected_ind = [vehicle_class_names.index(option) for option in self.selected_classes]
         else:
-            self.selected_classes = self.st.sidebar.multiselect("Classes", class_names, default=class_names[:3])
-        self.selected_ind = [class_names.index(option) for option in self.selected_classes]
+            self.selected_classes = self.st.sidebar.multiselect("Classes", license_class_names, default=license_class_names[:3])
+            self.selected_ind = [license_class_names.index(option) for option in self.selected_classes]
+        
         logger.info(f"Selected Classes : {self.selected_ind}")
         if not isinstance(self.selected_ind, list):  # Ensure selected_options is a list
             self.selected_ind = list(self.selected_ind)
@@ -184,8 +191,10 @@ class Inference:
 
     def get_model_info(self):
         models = model_info(api_host)
-        self.vehicle_detectors = models["VEHICLE_MODEL_NAME"]
-        self.license_detectors = models["LICENSE_MODEL_NAME"]
+        self.vehicle_detectors = models["VEHICLE_MODEL"]
+        self.license_detectors = models["LICENSE_MODEL"]
+        self.vehicle_detectors_names = models["VEHICLE_MODEL_NAME"]
+        self.license_detectors_names = models["LICENSE_MODEL_NAME"]
 
     def set_state(self,i):
         '''
@@ -209,7 +218,7 @@ class Inference:
             if side_left.button("Start",use_container_width=True):
                 side_right.button("Clear",use_container_width=True)  # Button to stop the inference
                 if self.source == "Image":
-                    annotated_result = vehicle_detection_image(
+                    annotated_result = vehicle_detection_image_file(
                         self.api_host,
                         self.selected_classes,
                         self.vid_file,
@@ -236,13 +245,11 @@ class Inference:
                     with self.st.spinner("Wait for Inferencing...", show_time=True):
                         annotated_result = vehicle_detection_video_file(
                                 self.api_host,
-                                sess_id,
                                 video_path,
                                 output_path,
                                 self.selected_classes,
                                 self.vehicle_conf,
                                 self.selected_ind,
-                                self.ann_frame,
                                 self.video_inference_ratio,
                         )
                     
@@ -275,9 +282,16 @@ class Inference:
                 elif self.source == "Video":
                     sess_id, video_path = upload_video(self.api_host,self.vid_file)
                     with self.st.spinner("Wait for Inferencing...", show_time=True):
+                        # results_list = license_number_video_infer(
+                        #     self.api_host,
+                        #     sess_id,
+                        #     video_path,
+                        #     self.vehicle_conf,
+                        #     self.license_conf,
+                        #     self.video_inference_ratio
+                        # )
                         results_list = license_number_video_infer(
                             self.api_host,
-                            sess_id,
                             video_path,
                             self.vehicle_conf,
                             self.license_conf,
@@ -285,7 +299,7 @@ class Inference:
                         )
               
                     self.st.session_state.detection_result = results_list
-                    # self.st.dataframe(self.st.session_state.detection_result)
+                    self.st.dataframe(self.st.session_state.detection_result)
                     self.st.button("Visualize",on_click=self.set_state, args=[2])
 
             if self.st.session_state.stage == 2:
@@ -301,7 +315,7 @@ class Inference:
                     output_path = 'out_' + video_path
 
                     # license_number_video_visualize(self.api_host,sess_id,video_path,self.st.session_state.detection_result,self.ann_frame)
-                    with self.st.spinner("Wait for Inferencing...", show_time=True):
+                    with self.st.spinner("Wait for Visualizing...", show_time=True):
                         annotated_result = license_number_video_visualize_file(self.api_host,video_path,output_path,self.st.session_state.detection_result)
                 
                     self.ann_frame.video(annotated_result,autoplay=True)
