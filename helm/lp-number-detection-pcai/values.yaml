@@ -26,7 +26,7 @@ frontend:
     repository: geuntakroh/lp-number-frontend
     pullPolicy: IfNotPresent
     # Overrides the image tag whose default is the chart appVersion.
-    tag: "v1.0"
+    tag: "v2.0"
   service:
     type: ClusterIP
     port: 80
@@ -56,10 +56,10 @@ frontend:
       port: http
   resources:
     requests:
-      cpu: 2
+      cpu: 4
       memory: 4Gi
     limits:
-      cpu: 4
+      cpu: 8
       memory: 8Gi
 
 backend:
@@ -69,7 +69,7 @@ backend:
     repository: geuntakroh/lp-number-backend
     pullPolicy: IfNotPresent
     # Overrides the image tag whose default is the chart appVersion.
-    tag: "v1.0"
+    tag: "v2.0"
   
   service:
     type: ClusterIP
@@ -78,22 +78,22 @@ backend:
 
   appConfig:
     detectors: 
-      option : "embedded" # Option 1 ( "embedded" ) : Embedded Model
-      server_token: ""
-      vehicle_detector : "yolo11s.pt" 
-      license_detector : "yolo11s_20epochs_best.pt"
+      # option : "embedded" # Option 1 ( "embedded" ) : Embedded Model
+      # server_token: ""
+      # vehicle_detector : "yolo11s.pt" 
+      # license_detector : "yolo11s_20epochs_best.pt"
       
       # option : kserve # Option 2 ( "kserve" ): Kserve in this Helm
       # server_token: ""
       # vehicle_detector : "vehicle_detector" 
       # license_detector : "license_detector"
       
-      # option : mlis # Option 3 (mlis): MLIS 
-      # mlis_deployment_name : "triton-test"
-      # mlis_deployment_namespace : "myname"
-      # server_token: "abcd"
-      # vehicle_detector : "vehicle_detector" 
-      # license_detector : "license_detector"
+      option : mlis # Option 3 (mlis): MLIS 
+      mlis_deployment_name : ""
+      mlis_deployment_namespace : ""
+      server_token: ""
+      vehicle_detector : "vehicle_detector" 
+      license_detector : "license_detector"
 
   # Additional volumes on the output Deployment definition.
   volumes: 
@@ -109,11 +109,11 @@ backend:
       subPath: config.yaml
   resources:
     requests:
-      cpu: 2
+      cpu: 4
       memory: 4Gi
     limits:
-      cpu: 4
-      memory: 8Gi
+      cpu: 12
+      memory: 16Gi
 
 
 imagePullSecrets: []
