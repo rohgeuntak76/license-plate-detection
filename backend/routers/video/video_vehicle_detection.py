@@ -64,7 +64,7 @@ def process_video_post_plate(inferencerequest : inferenceRequest,classes: list[i
         # if not ret :
             break
 
-        return_bytes = license_detect_bytes(frame,conf,classes)
+        return_bytes = license_detect_bytes(frame,conf)
         # Read bytes -> convert to cv image -> write
         image_np = np.frombuffer(return_bytes.read(), np.uint8)
         input_image = cv.imdecode(image_np, cv.IMREAD_COLOR) 
