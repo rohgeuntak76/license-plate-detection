@@ -17,11 +17,12 @@ def display_frame(frame_bytes,ann_frame,results_frame):
     ann_frame.image(frame_bytes) # Update the placeholder
     logger.info("display frame Done!")
 
-# def display_dataframe(detection_results,results_list,result_df):
-def display_dataframe(detection_results,results_list):
+def display_dataframe(detection_results,results_list,result_df):
+# def display_dataframe(detection_results,results_list):
     logger.info("display dataframe function called")
     results_json = json.loads(detection_results)
-    # result_df.add_rows(results_json)
+    result_df.add_rows(results_json)
+    logger.info(f"{results_json}")
     results_list.extend(results_json) # update list
     logger.info("display dataframe Done!")
 
@@ -119,11 +120,12 @@ def license_number_image_visualize(api_host,vid_file,detection_result):
 
 def license_number_video_infer(api_host,sess_id,video_path,vehicle_conf,license_conf,video_inference_ratio):
     results_list = []
-    # result_df = st.dataframe(pd.DataFrame(columns=("frame_number","track_id","vehicle_bbox","vehicle_bbox_score","lp_bbox","lp_bbox_score","lp_number","lp_text_score")),hide_index=True)
+    result_df = st.dataframe(pd.DataFrame(columns=("frame_number","track_id","vehicle_bbox","vehicle_bbox_score","lp_bbox","lp_bbox_score","lp_number","lp_text_score")),hide_index=True)
+    # streaming_dataframe(results_list)
     ws = websocket.WebSocketApp(
         f"ws://{api_host}/api/video/ws/license_number/{sess_id}",
-        # on_message=lambda ws, msg: display_dataframe(msg,results_list,result_df),
-        on_message=lambda ws, msg: display_dataframe(msg,results_list),
+        on_message=lambda ws, msg: display_dataframe(msg,results_list,result_df),
+        # on_message=lambda ws, msg: display_dataframe(msg,results_list),
         on_error=lambda ws, err: st.error(f"Error: {err}"),
         on_close=lambda ws,status,msg: st.info(f"Processing complete. code {status} : {msg}")
     )
@@ -150,3 +152,20 @@ def license_number_video_visualize(api_host,sess_id,video_path,detection_result,
     for frame in results_frame:
         ann_frame.image(frame)
         time.sleep(0.1)
+
+def license_number_video_visualize_file(api_host,video_path,output_path,detection_result):
+    url = f"http://{api_host}/api/utils/draw/annotatedVideo"
+    
+    payload = {
+        'video_path' : video_path,
+        'output_path' : output_path,
+        'detection_result': detection_result,
+    }
+    
+    response = requests.post(url,json=payload,stream=True)
+    if response.status_code == 200:
+        logger.info("Video download Done!!")
+        annotated_result = io.BytesIO(response.content)
+        return annotated_result
+    else:
+        return

@@ -4,7 +4,7 @@ from ultralytics.utils.checks import check_requirements
 import yaml
 import io
 
-from utils.inference import vehicle_detection_image, vehicle_detection_video_file, vehicle_detection_video, license_number_image_infer, license_number_image_visualize, license_number_video_infer, license_number_video_visualize
+from utils.inference import vehicle_detection_image, vehicle_detection_video_file,license_number_video_visualize_file, vehicle_detection_video, license_number_image_infer, license_number_image_visualize, license_number_video_infer, license_number_video_visualize
 from utils.model_info import model_info
 from utils.file_request import upload_video, delete_video
 from utils.logging import logger
@@ -285,7 +285,7 @@ class Inference:
                         )
               
                     self.st.session_state.detection_result = results_list
-                    self.st.dataframe(self.st.session_state.detection_result)
+                    # self.st.dataframe(self.st.session_state.detection_result)
                     self.st.button("Visualize",on_click=self.set_state, args=[2])
 
             if self.st.session_state.stage == 2:
@@ -298,9 +298,15 @@ class Inference:
 
                 elif self.source == "Video":
                     sess_id, video_path = upload_video(self.api_host,self.vid_file)
+                    output_path = 'out_' + video_path
 
-                    license_number_video_visualize(self.api_host,sess_id,video_path,self.st.session_state.detection_result,self.ann_frame)
+                    # license_number_video_visualize(self.api_host,sess_id,video_path,self.st.session_state.detection_result,self.ann_frame)
+                    with self.st.spinner("Wait for Inferencing...", show_time=True):
+                        annotated_result = license_number_video_visualize_file(self.api_host,video_path,output_path,self.st.session_state.detection_result)
                 
+                    self.ann_frame.video(annotated_result,autoplay=True)
+                    message, success = delete_video(self.api_host,video_path,output_path)
+                    logger.info(f"{message}")
                     self.st.dataframe(self.st.session_state.detection_result)
                     self.st.button("Visualize",on_click=self.set_state, args=[2])
 
