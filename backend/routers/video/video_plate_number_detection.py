@@ -15,6 +15,17 @@ import cv2 as cv
 
 from utils.detector import crop_vehicle_license_then_read,reset_tracker
 from utils.logging import logger
+import yaml
+from ultralytics import YOLO
+import easyocr
+
+with open("./config.yaml", "r") as f:
+    config = yaml.safe_load(f)
+
+# TOKEN = config["detectors"]["server_token"]
+MODEL_ENDPOINT = config["detectors"]["server_url"]
+VEHICLE_MODEL_NAME = config["detectors"]["vehicle_detector"]
+LICENSE_MODEL_NAME = config["detectors"]["license_detector"]
 
 class inferenceRequest(BaseModel):
     video_path: str
@@ -62,6 +73,10 @@ def video_license_plate_number_crop_info(inferencerequest : inferenceRequest):
     Use Tracker
     return info ( not image )
     '''
+    vehicle_tracker = YOLO(MODEL_ENDPOINT + '/' + VEHICLE_MODEL_NAME, task='detect')
+    license_detector = YOLO(MODEL_ENDPOINT + '/' + LICENSE_MODEL_NAME, task='detect')
+    plate_reader = easyocr.Reader(['en'],gpu=False)
+
     results = []
     video_path = inferencerequest.video_path
     vehicle_conf = inferencerequest.vehicle_conf
@@ -84,13 +99,13 @@ def video_license_plate_number_crop_info(inferencerequest : inferenceRequest):
                 break
             
             # Process frame - detect license plates
-            detection_results = crop_vehicle_license_then_read(input_image=frame,vehicle_conf=vehicle_conf,license_conf=license_conf,frame_number=frame_num)
+            detection_results = crop_vehicle_license_then_read(vehicle_tracker,license_detector,plate_reader,input_image=frame,vehicle_conf=vehicle_conf,license_conf=license_conf,frame_number=frame_num)
             # Convert frame to bytes and send
             results.extend(detection_results)
     finally:    
         logger.info(f"Inferenced # of Frame : {frame_num} / {total_frame}")
-        if reset_tracker():
-            logger.info('tracker reset done!')
+        # if reset_tracker():
+            # logger.info('tracker reset done!')
             
         # Clean up input video file
         cap.release()
@@ -147,8 +162,8 @@ async def process_video_ws_license_number(websocket: WebSocket, session_id: str)
     finally:
         logger.info(f"websocket client state : {websocket.client_state}. websocket application state : {websocket.application_state}")
         logger.info(f"Inferenced # of Frame : {frame_num} / {total_frame}")
-        if reset_tracker():
-            logger.info('tracker reset done!')
+        # if reset_tracker():
+            # logger.info('tracker reset done!')
         
         if websocket.application_state != websockets.WebSocketState.DISCONNECTED:
             await websocket.close(reason="Normal closure")

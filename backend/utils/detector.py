@@ -16,13 +16,17 @@ MODEL_ENDPOINT = config["detectors"]["server_url"]
 VEHICLE_MODEL_NAME = config["detectors"]["vehicle_detector"]
 LICENSE_MODEL_NAME = config["detectors"]["license_detector"]
 
-vehicle_detector = YOLO(MODEL_ENDPOINT + '/' + VEHICLE_MODEL_NAME, task='detect')
-vehicle_tracker = YOLO(MODEL_ENDPOINT + '/' + VEHICLE_MODEL_NAME, task='detect')
-license_detector = YOLO(MODEL_ENDPOINT + '/' + LICENSE_MODEL_NAME, task='detect')
-plate_reader = easyocr.Reader(['en'],gpu=False)
+# vehicle_detector = YOLO(MODEL_ENDPOINT + '/' + VEHICLE_MODEL_NAME, task='detect')
+# vehicle_tracker = YOLO(MODEL_ENDPOINT + '/' + VEHICLE_MODEL_NAME, task='detect')
+# license_detector = YOLO(MODEL_ENDPOINT + '/' + LICENSE_MODEL_NAME, task='detect')
+# plate_reader = easyocr.Reader(['en'],gpu=False)
+
 vehicles_id = [2,3,5,7]
 
 def get_model_names():
+    vehicle_detector = YOLO(MODEL_ENDPOINT + '/' + VEHICLE_MODEL_NAME, task='detect')
+    license_detector = YOLO(MODEL_ENDPOINT + '/' + LICENSE_MODEL_NAME, task='detect')
+
     vehicle_detector_names = vehicle_detector.names
     license_detector_names = license_detector.names
     return vehicle_detector_names, license_detector_names
@@ -39,6 +43,7 @@ def vehicle_detect_bytes(image,conf: float = 0.25,classes: list = vehicles_id):
     Returns:
     bytes : BytesIO object that contains the image in JPEG format with quality 95
     """
+    vehicle_detector = YOLO(MODEL_ENDPOINT + '/' + VEHICLE_MODEL_NAME, task='detect')
     results = vehicle_detector(image,conf=conf,classes=classes)
     prediction = results[0].plot()
     return_bytes = get_bytes_from_prediction(prediction,quality=65)
@@ -55,6 +60,7 @@ def license_detect_bytes(image,conf: float = 0.25):
     Returns:
     bytes : BytesIO object that contains the image in JPEG format with quality 95
     """
+    license_detector = YOLO(MODEL_ENDPOINT + '/' + LICENSE_MODEL_NAME, task='detect')
     results = license_detector(image,conf=conf)
     prediction = results[0].plot()
     return_bytes = get_bytes_from_prediction(prediction,quality=65)
@@ -73,6 +79,7 @@ def license_detect_number(image):
         lic_score : "detection score"
     }
     """
+    plate_reader = easyocr.Reader(['en'],gpu=False)
     file = image.file.read()
     ocr_detections = plate_reader.readtext(file)
     lic_text, lic_score = reformat_license_number(ocr_detections)
@@ -116,7 +123,7 @@ def reformat_license_number(detections):
 
     return None, None
 
-def crop_vehicle_license_then_read(input_image,vehicle_conf: float = 0.25,license_conf: float = 0.25,frame_number: int = 0):
+def crop_vehicle_license_then_read(vehicle_tracker,license_detector,plate_reader,input_image,vehicle_conf: float = 0.25,license_conf: float = 0.25,frame_number: int = 0):
     """
     Get the image or frame of video and return the results as a form of list of dicts
     
@@ -141,6 +148,10 @@ def crop_vehicle_license_then_read(input_image,vehicle_conf: float = 0.25,licens
         },
     ]
     """
+    # vehicle_tracker = YOLO(MODEL_ENDPOINT + '/' + VEHICLE_MODEL_NAME, task='detect')
+    # license_detector = YOLO(MODEL_ENDPOINT + '/' + LICENSE_MODEL_NAME, task='detect')
+    # plate_reader = easyocr.Reader(['en'],gpu=False)
+
     frame_results = [] # change return value type as list
 
     vehicle_results = vehicle_tracker.track(input_image, persist=True,conf=vehicle_conf,classes=vehicles_id)[0]
@@ -187,7 +198,7 @@ def crop_vehicle_license_then_read(input_image,vehicle_conf: float = 0.25,licens
     return frame_results
 
 
-def reset_tracker():
+def reset_tracker(vehicle_tracker):
     if len(vehicle_tracker.predictor.trackers) > 0:
         vehicle_tracker.predictor.trackers[0].reset()
         # print(vehicle_tracker.predictor.trackers[0])
