@@ -4,14 +4,101 @@ from fastapi import WebSocket,WebSocketDisconnect,websockets
 from websockets.exceptions import InvalidState
 import asyncio
 
+from fastapi import UploadFile, Form
+from fastapi.responses import StreamingResponse
+from pydantic import BaseModel, Field
+from typing import Optional
+
+import cv2 as cv
+import numpy as np
 import cv2 as cv
 
 from utils.detector import crop_vehicle_license_then_read,reset_tracker
 from utils.logging import logger
 
+class inferenceRequest(BaseModel):
+    video_path: str
+    vehicle_conf: float = 0.25
+    license_conf: float = 0.25
+    ratio: float = 0.25
+
+class DetectionResult(BaseModel):
+    """Single vehicle and license plate detection result"""
+    frame_number: int = Field(..., description="Frame number in sequence")
+    track_id: int = Field(..., description="Unique tracking ID for the vehicle")
+    vehicle_bbox: list[float] = Field(..., description="Vehicle bounding box [x1, y1, x2, y2]")
+    vehicle_bbox_score: float = Field(..., ge=0.0, le=1.0, description="Vehicle detection confidence score")
+    lp_bbox: list[float] = Field(..., description="License plate bounding box [x1, y1, x2, y2]")
+    lp_bbox_score: float = Field(..., ge=0.0, le=1.0, description="License plate detection confidence score")
+    lp_number: Optional[str] = Field(default=None, description="Detected license plate text")
+    lp_text_score: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="OCR confidence score")
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "frame_number": 1,
+                "track_id": 123,
+                "vehicle_bbox": [100.5, 200.3, 350.7, 450.2],
+                "vehicle_bbox_score": 0.95,
+                "lp_bbox": [150.1, 220.4, 280.8, 250.6],
+                "lp_bbox_score": 0.88,
+                "lp_number": "ABC123",
+                "lp_text_score": 0.92
+            }
+        }
+
 router = APIRouter(
     prefix="/api/video",
 )   
+
+@router.post(
+    "/plate_number/crop/detect/info",
+    tags=["Plate Number Detection"],
+    response_model=list[DetectionResult],
+    summary="Detect license Numbers in Image",
+    description="Get vehicle Image -> Crop vehicle -> Crop license plate -> Read Plate Number ( OCR ) -> Return Dict",
+)
+def video_license_plate_number_crop_info(inferencerequest : inferenceRequest):
+    '''
+    Use Tracker
+    return info ( not image )
+    '''
+    results = []
+    video_path = inferencerequest.video_path
+    vehicle_conf = inferencerequest.vehicle_conf
+    license_conf = inferencerequest.license_conf
+    ratio = inferencerequest.ratio
+
+    # Process video
+    cap = cv.VideoCapture(video_path)
+    fps = cap.get(cv.CAP_PROP_FPS)
+    total_frame = cap.get(cv.CAP_PROP_FRAME_COUNT)
+    thres_frame = total_frame*ratio
+    frame_num = -1
+
+    try:
+        while cap.isOpened():
+            frame_num += 1
+            ret, frame = cap.read()
+            ### limit num of frames for test purpose
+            if not ret or frame_num > thres_frame:
+                break
+            
+            # Process frame - detect license plates
+            detection_results = crop_vehicle_license_then_read(input_image=frame,vehicle_conf=vehicle_conf,license_conf=license_conf,frame_number=frame_num)
+            # Convert frame to bytes and send
+            results.extend(detection_results)
+    finally:    
+        logger.info(f"Inferenced # of Frame : {frame_num} / {total_frame}")
+        if reset_tracker():
+            logger.info('tracker reset done!')
+            
+        # Clean up input video file
+        cap.release()
+        if os.path.exists(video_path):
+            os.remove(video_path)
+
+        return results
+
 
 @router.websocket("/ws/license_number/{session_id}")
 async def process_video_ws_license_number(websocket: WebSocket, session_id: str):
