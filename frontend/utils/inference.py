@@ -6,9 +6,9 @@ from utils.logging import logger
 
 def vehicle_detection_image_file(api_host, selected_classes, vid_file,vehicle_conf,selected_ind):
     if selected_classes[0] == 'License_Plate': # license plate detection usecase
-        url = "http://" + api_host + "/api/image/plates/detect/annotated"
+        url = "http://" + api_host + "/api/image/plates/detect/annotatedImage"
     else: # vehicle detction usecase
-        url = "http://" + api_host + "/api/image/vehicles/detect/annotated"
+        url = "http://" + api_host + "/api/image/vehicles/detect/annotatedImage"
     # Do inference
     files = {
             'image': (vid_file.name, vid_file.getvalue(), 'image/jpeg'),
@@ -68,7 +68,7 @@ def license_number_image_visualize(api_host,vid_file,detection_result):
         'item_json': json.dumps(detection_result),
     }
 
-    url = 'http://' + api_host + '/api/utils/draw/annotated'
+    url = 'http://' + api_host + '/api/utils/draw/annotatedImage'
     response = requests.post(url,files=files,data=data,stream=True)
     annotated_result = io.BytesIO(response.content)
     return annotated_result

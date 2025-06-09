@@ -1,8 +1,6 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
-# from ultralytics import YOLO
 from ultralytics.utils.checks import check_requirements
 import yaml
-import io
 
 from utils.inference import vehicle_detection_image_file, vehicle_detection_video_file,license_number_video_visualize_file, license_number_image_infer, license_number_image_visualize, license_number_video_infer
 from utils.model_info import model_info
@@ -162,15 +160,9 @@ class Inference:
         available_models = [self.vehicle_detectors, self.license_detectors]
         selected_model = self.st.sidebar.selectbox("Model", available_models)
 
-        # model = YOLO(f"{selected_model.lower()}",task='detect')  # Load the YOLO model
-
         vehicle_class_names = list(self.vehicle_detectors_names.values())  # Convert dictionary to list of class names
         license_class_names = list(self.license_detectors_names.values())  # Convert dictionary to list of class names
-        # print(vehicle_class_names)
-        # print(license_class_names)
-        # # print(class_names)
-        # # Multiselect box with class names and get indices of selected classes
-        # # if len(class_names) > 1:
+        
         if selected_model == available_models[0]:
             self.selected_classes = self.st.sidebar.multiselect("Classes", vehicle_class_names, default=[vehicle_class_names[i] for i in [2,3,5,7]])   
             self.selected_ind = [vehicle_class_names.index(option) for option in self.selected_classes]
@@ -232,16 +224,6 @@ class Inference:
                     sess_id, video_path = upload_video(self.api_host,self.vid_file)
                     output_path = 'out_' + video_path
                     # Do inference
-                    # vehicle_detection_video(
-                    #     self.api_host,
-                    #     sess_id,
-                    #     video_path,
-                    #     self.selected_classes,
-                    #     self.vehicle_conf,
-                    #     self.selected_ind,
-                    #     self.ann_frame,
-                    #     self.video_inference_ratio,
-                    # )
                     with self.st.spinner("Wait for Inferencing...", show_time=True):
                         annotated_result = vehicle_detection_video_file(
                                 self.api_host,
@@ -282,14 +264,6 @@ class Inference:
                 elif self.source == "Video":
                     sess_id, video_path = upload_video(self.api_host,self.vid_file)
                     with self.st.spinner("Wait for Inferencing...", show_time=True):
-                        # results_list = license_number_video_infer(
-                        #     self.api_host,
-                        #     sess_id,
-                        #     video_path,
-                        #     self.vehicle_conf,
-                        #     self.license_conf,
-                        #     self.video_inference_ratio
-                        # )
                         results_list = license_number_video_infer(
                             self.api_host,
                             video_path,
@@ -314,7 +288,6 @@ class Inference:
                     sess_id, video_path = upload_video(self.api_host,self.vid_file)
                     output_path = 'out_' + video_path
 
-                    # license_number_video_visualize(self.api_host,sess_id,video_path,self.st.session_state.detection_result,self.ann_frame)
                     with self.st.spinner("Wait for Visualizing...", show_time=True):
                         annotated_result = license_number_video_visualize_file(self.api_host,video_path,output_path,self.st.session_state.detection_result)
                 
