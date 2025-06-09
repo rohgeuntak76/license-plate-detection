@@ -12,13 +12,13 @@ router = APIRouter(
 )
 
 @router.post(
-    "/vehicles/detect/annotated",
+    "/vehicles/detect/annotatedImage",
     tags=["Vehicles Detection"],
     response_class=StreamingResponse,
     summary="Detect Vehicles in Image",
     description="Get vehicle Image, Return Annotated Image of vehicle detection by Yolo",
 )
-def image_vehicle_detect(image: UploadFile,conf: float = Form(0.25),classes: list[int] = Query()):
+def get_image_return_vehicle_annotatedImage(image: UploadFile,conf: float = Form(0.25),classes: list[int] = Query()):
     file = image.file.read()
     image_np = np.frombuffer(file, np.uint8)
     input_image = cv.imdecode(image_np, cv.IMREAD_COLOR) # bytes to cv image
@@ -27,13 +27,13 @@ def image_vehicle_detect(image: UploadFile,conf: float = Form(0.25),classes: lis
     return StreamingResponse(content=return_bytes,media_type="image/jpeg")
 
 @router.post(
-    "/plates/detect/annotated",
+    "/plates/detect/annotatedImage",
     tags=["Plates Detection"],
     response_class=StreamingResponse,
     summary="Detect license plates in Image",
     description="Get vehicle Image , Return Annotated Image of license detection by Yolo ( No cropping )",
 )
-def image_license_plate_detect(image: UploadFile,conf: float = Form(0.25)):
+def get_image_return_plate_annotatedImage(image: UploadFile,conf: float = Form(0.25)):
     file = image.file.read()
     image_np = np.frombuffer(file, np.uint8)
     input_image = cv.imdecode(image_np, cv.IMREAD_COLOR) 

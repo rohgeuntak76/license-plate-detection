@@ -1,23 +1,18 @@
 import os
-from fastapi import APIRouter
-from fastapi import WebSocket,WebSocketDisconnect,websockets
-from websockets.exceptions import InvalidState
-import asyncio
-
-from fastapi import UploadFile, Form
-from fastapi.responses import StreamingResponse
-from pydantic import BaseModel, Field
-from typing import Optional
-
-import cv2 as cv
-import numpy as np
-import cv2 as cv
-
-from utils.detector import crop_vehicle_license_then_read,reset_tracker
-from utils.logging import logger
 import yaml
 from ultralytics import YOLO
 import easyocr
+import cv2 as cv
+
+from fastapi import APIRouter
+from fastapi import WebSocket,WebSocketDisconnect,websockets
+from pydantic import BaseModel, Field
+from typing import Optional
+from websockets.exceptions import InvalidState
+import asyncio
+
+from utils.detector import crop_vehicle_license_then_read
+from utils.logging import logger
 
 with open("./config.yaml", "r") as f:
     config = yaml.safe_load(f)
@@ -65,10 +60,10 @@ router = APIRouter(
     "/plate_number/crop/detect/info",
     tags=["Plate Number Detection"],
     response_model=list[DetectionResult],
-    summary="Detect license Numbers in Image",
-    description="Get vehicle Image -> Crop vehicle -> Crop license plate -> Read Plate Number ( OCR ) -> Return Dict",
+    summary="Detect license Numbers in Video",
+    description="Get vehicle Video -> Crop vehicle -> Crop license plate -> Read Plate Number ( OCR ) -> Return Dict",
 )
-def video_license_plate_number_crop_info(inferencerequest : inferenceRequest):
+def get_video_crop_return_info(inferencerequest : inferenceRequest):
     '''
     Use Tracker
     return info ( not image )
@@ -104,8 +99,6 @@ def video_license_plate_number_crop_info(inferencerequest : inferenceRequest):
             results.extend(detection_results)
     finally:    
         logger.info(f"Inferenced # of Frame : {frame_num} / {total_frame}")
-        # if reset_tracker():
-            # logger.info('tracker reset done!')
             
         # Clean up input video file
         cap.release()
@@ -116,7 +109,7 @@ def video_license_plate_number_crop_info(inferencerequest : inferenceRequest):
 
 
 @router.websocket("/ws/license_number/{session_id}")
-async def process_video_ws_license_number(websocket: WebSocket, session_id: str):
+async def get_video_return_license_number_info_ws(websocket: WebSocket, session_id: str):
     '''
     Does not Use Tracker
     return info ( not image )
@@ -154,16 +147,13 @@ async def process_video_ws_license_number(websocket: WebSocket, session_id: str)
                 await websocket.send_json(detection_results)
     
             # # Control processing rate to not overwhelm the connection ( without this sleep, dataframe visualize and interrupt inference won't work)
-            # await asyncio.sleep(1/fps)
-            await asyncio.sleep(0.05)
+            await asyncio.sleep(1/fps)
 
     except (InvalidState,WebSocketDisconnect) as e:
         logger.error(f"{e}")
     finally:
         logger.info(f"websocket client state : {websocket.client_state}. websocket application state : {websocket.application_state}")
         logger.info(f"Inferenced # of Frame : {frame_num} / {total_frame}")
-        # if reset_tracker():
-            # logger.info('tracker reset done!')
         
         if websocket.application_state != websockets.WebSocketState.DISCONNECTED:
             await websocket.close(reason="Normal closure")

@@ -7,7 +7,7 @@ from typing import Optional
 import cv2 as cv
 import numpy as np
 
-from utils.detector import crop_vehicle_license_then_read, license_detect_number, reset_tracker , get_bytes_from_prediction
+from utils.detector import crop_vehicle_license_then_read, license_detect_number, get_bytes_from_prediction
 from utils.logging import logger
 import yaml
 from ultralytics import YOLO
@@ -16,7 +16,6 @@ import easyocr
 with open("./config.yaml", "r") as f:
     config = yaml.safe_load(f)
 
-# TOKEN = config["detectors"]["server_token"]
 MODEL_ENDPOINT = config["detectors"]["server_url"]
 VEHICLE_MODEL_NAME = config["detectors"]["vehicle_detector"]
 LICENSE_MODEL_NAME = config["detectors"]["license_detector"]
@@ -56,7 +55,7 @@ router = APIRouter(
     summary="Detect license Numbers in Image",
     description="Get vehicle Image -> Crop vehicle -> Crop license plate -> Read Plate Number ( OCR ) -> Return Dict",
 )
-def image_license_plate_number_crop_info(image: UploadFile,vehicle_conf: float = Form(0.25),license_conf: float = Form(0.25)):
+def get_image_crop_return_info(image: UploadFile,vehicle_conf: float = Form(0.25),license_conf: float = Form(0.25)):
     vehicle_tracker = YOLO(MODEL_ENDPOINT + '/' + VEHICLE_MODEL_NAME, task='detect')
     license_detector = YOLO(MODEL_ENDPOINT + '/' + LICENSE_MODEL_NAME, task='detect')
     plate_reader = easyocr.Reader(['en'],gpu=False)
@@ -66,18 +65,17 @@ def image_license_plate_number_crop_info(image: UploadFile,vehicle_conf: float =
     input_image = cv.imdecode(image_np, cv.IMREAD_COLOR) 
 
     results = crop_vehicle_license_then_read(vehicle_tracker,license_detector,plate_reader,input_image,vehicle_conf,license_conf)
-    # if reset_tracker():
-        # logger.info('tracker reset done!')
+    
     return results
 
 @router.post(
-    "/crop/detect/annotated",
+    "/crop/detect/annotatedImage",
     tags=["Plate Number Detection"],
     response_class=StreamingResponse,
     summary="Detect license Numbers in Image",
     description="Get vehicle Image -> Crop vehicle -> Crop license plate -> Read Plate Number ( OCR ) -> Return Annotated Image",
 )
-def image_license_plate_number_crop_ann(image: UploadFile,vehicle_conf: float = Form(0.25),license_conf: float = Form(0.25)):
+def get_image_crop_return_annotatedImage(image: UploadFile,vehicle_conf: float = Form(0.25),license_conf: float = Form(0.25)):
     vehicle_tracker = YOLO(MODEL_ENDPOINT + '/' + VEHICLE_MODEL_NAME, task='detect')
     license_detector = YOLO(MODEL_ENDPOINT + '/' + LICENSE_MODEL_NAME, task='detect')
     plate_reader = easyocr.Reader(['en'],gpu=False)
@@ -87,8 +85,7 @@ def image_license_plate_number_crop_ann(image: UploadFile,vehicle_conf: float = 
     input_image = cv.imdecode(image_np, cv.IMREAD_COLOR) 
 
     results = crop_vehicle_license_then_read(vehicle_tracker,license_detector,plate_reader,input_image,vehicle_conf=vehicle_conf,license_conf=license_conf)
-    # if reset_tracker():
-        # logger.info('tracker reset done!')
+    
     
     for object in range(len(results)):
         # Draw Vehicle Bbox
@@ -119,10 +116,10 @@ def image_license_plate_number_crop_ann(image: UploadFile,vehicle_conf: float = 
     "/detect/info",
     tags=["Experimental"],
     # response_class=StreamingResponse,
-    summary="Detect license Numbers in Cropped Image",
-    description="Get Cropped license Plate Image , Return Plate number and plate score",
+    summary="Detect license Numbers in vehicle Image",
+    description="Get vehicle Image , Return Plate number and plate score",
 )
-def image_license_plate_number_info(image: UploadFile):
+def get_vehicle_image_return_ocr_result(image: UploadFile):
     lic_text, lic_score = license_detect_number(image)
 
     return {"plate_number": lic_text, "plate_score": lic_score}

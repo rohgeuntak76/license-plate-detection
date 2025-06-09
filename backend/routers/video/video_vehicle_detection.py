@@ -1,19 +1,18 @@
 import os
 from fastapi import APIRouter
+from fastapi.responses import StreamingResponse, FileResponse
+from fastapi import Query
+from pydantic import BaseModel
+
 from fastapi import WebSocket,WebSocketDisconnect,websockets
 from websockets.exceptions import InvalidState
 import asyncio
 
+import numpy as np
 import cv2 as cv
 
 from utils.detector import vehicle_detect_bytes,license_detect_bytes
 from utils.logging import logger
-
-from fastapi.responses import StreamingResponse, FileResponse
-from fastapi import UploadFile, Form, Query
-import uuid
-import numpy as np
-from pydantic import BaseModel
 
 
 class inferenceRequest(BaseModel):
@@ -26,54 +25,6 @@ router = APIRouter(
     prefix="/api/video",
 )   
 
-@router.post(
-    "/plates/detect/annotatedVideo",
-    tags=["Plates Detection"],
-    response_class=StreamingResponse,
-    summary="Detect license plates in Video",
-    description="Get Traffic Video, Return Annotated Video",
-)
-def process_video_post_plate(inferencerequest : inferenceRequest,classes: list[int] = Query()):
-    '''
-    Does not Use Tracker
-    '''
-    video_path = inferencerequest.video_path
-    output_path = inferencerequest.output_path
-    conf = inferencerequest.conf
-    ratio = inferencerequest.ratio
-
-    # Process video
-    cap = cv.VideoCapture(video_path)
-    fps = cap.get(cv.CAP_PROP_FPS)
-    
-    fourcc = cv.VideoWriter_fourcc(*'avc1')  # Specify the codec
-    width = int(cap.get(cv.CAP_PROP_FRAME_WIDTH))
-    height = int(cap.get(cv.CAP_PROP_FRAME_HEIGHT))
-    out = cv.VideoWriter(output_path, fourcc, fps, (width, height))
-
-
-    total_frame = cap.get(cv.CAP_PROP_FRAME_COUNT)
-    thres_frame = total_frame * ratio
-    frame_num = -1
-
-    while cap.isOpened():
-        frame_num += 1
-        ret, frame = cap.read()
-        ### limit 10 frame for test purpose
-        if not ret or frame_num > thres_frame:
-        # if not ret :
-            break
-
-        return_bytes = license_detect_bytes(frame,conf)
-        # Read bytes -> convert to cv image -> write
-        image_np = np.frombuffer(return_bytes.read(), np.uint8)
-        input_image = cv.imdecode(image_np, cv.IMREAD_COLOR) 
-        out.write(input_image)
-
-    out.release()
-    cap.release()
-
-    return FileResponse(output_path,media_type="video/mp4")
 
 @router.post(
     "/vehicles/detect/annotatedVideo",
@@ -82,7 +33,7 @@ def process_video_post_plate(inferencerequest : inferenceRequest,classes: list[i
     summary="Detect Vehicles in Video",
     description="Get Traffic Video, Return Annotated Video",
 )
-def process_video_post_vehicle(inferencerequest : inferenceRequest,classes: list[int] = Query()):
+def get_video_return_vehicle_annotatedVideo(inferencerequest : inferenceRequest,classes: list[int] = Query()):
     '''
     Does not Use Tracker
     '''
@@ -124,9 +75,58 @@ def process_video_post_vehicle(inferencerequest : inferenceRequest,classes: list
 
     return FileResponse(output_path,media_type="video/mp4")
 
+@router.post(
+    "/plates/detect/annotatedVideo",
+    tags=["Plates Detection"],
+    response_class=StreamingResponse,
+    summary="Detect license plates in Video",
+    description="Get Traffic Video, Return Annotated Video",
+)
+def get_video_return_plate_annotatedVideo(inferencerequest : inferenceRequest,classes: list[int] = Query()):
+    '''
+    Does not Use Tracker
+    '''
+    video_path = inferencerequest.video_path
+    output_path = inferencerequest.output_path
+    conf = inferencerequest.conf
+    ratio = inferencerequest.ratio
+
+    # Process video
+    cap = cv.VideoCapture(video_path)
+    fps = cap.get(cv.CAP_PROP_FPS)
+    
+    fourcc = cv.VideoWriter_fourcc(*'avc1')  # Specify the codec
+    width = int(cap.get(cv.CAP_PROP_FRAME_WIDTH))
+    height = int(cap.get(cv.CAP_PROP_FRAME_HEIGHT))
+    out = cv.VideoWriter(output_path, fourcc, fps, (width, height))
+
+
+    total_frame = cap.get(cv.CAP_PROP_FRAME_COUNT)
+    thres_frame = total_frame * ratio
+    frame_num = -1
+
+    while cap.isOpened():
+        frame_num += 1
+        ret, frame = cap.read()
+        ### limit 10 frame for test purpose
+        if not ret or frame_num > thres_frame:
+        # if not ret :
+            break
+
+        return_bytes = license_detect_bytes(frame,conf)
+        # Read bytes -> convert to cv image -> write
+        image_np = np.frombuffer(return_bytes.read(), np.uint8)
+        input_image = cv.imdecode(image_np, cv.IMREAD_COLOR) 
+        out.write(input_image)
+
+    out.release()
+    cap.release()
+
+    return FileResponse(output_path,media_type="video/mp4")
+
 
 @router.websocket("/ws/vehicle/{session_id}")
-async def process_video_ws_vehicle(websocket: WebSocket, session_id: str):
+async def get_video_return_vehicle_annotatedFrame_ws(websocket: WebSocket, session_id: str):
     '''
     Does not Use Tracker
     '''
@@ -178,7 +178,7 @@ async def process_video_ws_vehicle(websocket: WebSocket, session_id: str):
             os.remove(video_path)
 
 @router.websocket("/ws/license_plate/{session_id}")
-async def process_video_ws_license_plate(websocket: WebSocket, session_id: str):
+async def get_video_return_plate_annotatedFrame_ws(websocket: WebSocket, session_id: str):
     '''
     Does not Use Tracker
     '''

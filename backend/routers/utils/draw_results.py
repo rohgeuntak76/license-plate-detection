@@ -34,7 +34,7 @@ router = APIRouter(
     summary="Draw Annotated Video",
     description="Get Image and detection info -> Draw and Return Annotated Video",
 )
-def get_info_return_video(drawrequest: DrawRequest):
+def get_info_return_annotatedVideo(drawrequest: DrawRequest):
     """
     Get video and detection info -> Draw and Return Annotated Video
     
@@ -48,7 +48,7 @@ def get_info_return_video(drawrequest: DrawRequest):
     video_path = drawrequest.video_path
     output_path = drawrequest.output_path
     detection_results = drawrequest.detection_result
-    # print(detection_results)
+    
     results_df = pd.DataFrame(detection_results)
     max_frame_num = results_df["frame_number"].max()
     cap = cv.VideoCapture(video_path)
@@ -104,13 +104,13 @@ def get_info_return_video(drawrequest: DrawRequest):
     return FileResponse(output_path,media_type="video/mp4")
 
 @router.post(
-    "/draw/annotated",
+    "/draw/annotatedImage",
     tags=["Utils"],
     response_class=StreamingResponse,
     summary="Draw Annotated Image",
     description="Get Image and detection info -> Draw and Return Annotated Image",
 )
-def image_info_ann(image: UploadFile,item_json: str = Form()):
+def get_info_return_annotatedImage(image: UploadFile,item_json: str = Form()):
     file = image.file.read()
     image_np = np.frombuffer(file, np.uint8)
     input_image = cv.imdecode(image_np, cv.IMREAD_COLOR) 
@@ -143,7 +143,7 @@ def image_info_ann(image: UploadFile,item_json: str = Form()):
 
 
 @router.websocket("/ws/draw/annotated/{session_id}")
-async def video_info_ann(websocket: WebSocket):
+async def get_info_return_annotatedFrame_ws(websocket: WebSocket):
     """
     Get video and detection info -> Draw and Return Annotated Image
     
