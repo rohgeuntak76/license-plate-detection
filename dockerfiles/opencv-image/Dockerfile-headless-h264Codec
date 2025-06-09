@@ -1,0 +1,7 @@
+FROM python-opencv-h264:3.11-slim 
+
+WORKDIR /app
+
+RUN python -m pip install --no-binary opencv-python-headless opencv-python-headless 
+
+
