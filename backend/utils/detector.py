@@ -11,15 +11,9 @@ import yaml
 with open("./config.yaml", "r") as f:
     config = yaml.safe_load(f)
 
-# TOKEN = config["detectors"]["server_token"]
 MODEL_ENDPOINT = config["detectors"]["server_url"]
 VEHICLE_MODEL_NAME = config["detectors"]["vehicle_detector"]
 LICENSE_MODEL_NAME = config["detectors"]["license_detector"]
-
-# vehicle_detector = YOLO(MODEL_ENDPOINT + '/' + VEHICLE_MODEL_NAME, task='detect')
-# vehicle_tracker = YOLO(MODEL_ENDPOINT + '/' + VEHICLE_MODEL_NAME, task='detect')
-# license_detector = YOLO(MODEL_ENDPOINT + '/' + LICENSE_MODEL_NAME, task='detect')
-# plate_reader = easyocr.Reader(['en'],gpu=False)
 
 vehicles_id = [2,3,5,7]
 
@@ -148,10 +142,6 @@ def crop_vehicle_license_then_read(vehicle_tracker,license_detector,plate_reader
         },
     ]
     """
-    # vehicle_tracker = YOLO(MODEL_ENDPOINT + '/' + VEHICLE_MODEL_NAME, task='detect')
-    # license_detector = YOLO(MODEL_ENDPOINT + '/' + LICENSE_MODEL_NAME, task='detect')
-    # plate_reader = easyocr.Reader(['en'],gpu=False)
-
     frame_results = [] # change return value type as list
 
     vehicle_results = vehicle_tracker.track(input_image, persist=True,conf=vehicle_conf,classes=vehicles_id)[0]
@@ -198,10 +188,10 @@ def crop_vehicle_license_then_read(vehicle_tracker,license_detector,plate_reader
     return frame_results
 
 
-def reset_tracker(vehicle_tracker):
-    if len(vehicle_tracker.predictor.trackers) > 0:
-        vehicle_tracker.predictor.trackers[0].reset()
-        # print(vehicle_tracker.predictor.trackers[0])
-        return True
-    else:
-        logger.info('tracker does not exists')
+# def reset_tracker(vehicle_tracker):
+#     if len(vehicle_tracker.predictor.trackers) > 0:
+#         vehicle_tracker.predictor.trackers[0].reset()
+#         # print(vehicle_tracker.predictor.trackers[0])
+#         return True
+#     else:
+#         logger.info('tracker does not exists')
