@@ -97,7 +97,7 @@ def get_info_return_annotatedVideo(drawrequest: DrawRequest):
                 return_bytes = get_bytes_from_prediction(frame,quality=65)
                 image_np = np.frombuffer(return_bytes.read(), np.uint8)
                 input_image = cv.imdecode(image_np, cv.IMREAD_COLOR) 
-                out.write(input_image)
+        out.write(input_image)
     out.release()
     cap.release()
 
