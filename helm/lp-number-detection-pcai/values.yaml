@@ -26,7 +26,7 @@ frontend:
     repository: geuntakroh/lp-number-frontend
     pullPolicy: IfNotPresent
     # Overrides the image tag whose default is the chart appVersion.
-    tag: "v2.0"
+    tag: "v1.0.0"
   service:
     type: ClusterIP
     port: 80
@@ -69,7 +69,7 @@ backend:
     repository: geuntakroh/lp-number-backend
     pullPolicy: IfNotPresent
     # Overrides the image tag whose default is the chart appVersion.
-    tag: "v2.0"
+    tag: "v1.0.0"
   
   service:
     type: ClusterIP
