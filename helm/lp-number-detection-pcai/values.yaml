@@ -6,19 +6,6 @@ ezua:
     endpoint: "lp-number-detection.${DOMAIN_NAME}"
     istioGateway: "istio-system/ezaf-gateway"
 
-inferenceService:
-  enabled: false
-  image: "nvcr.io/nvidia/tritonserver:25.02-py3"
-  modelFormat: "triton"
-  runtime: kserve-tritonserver-ngc
-  storageUri: "" # e.g. s3://mlflow.sy6s171r10/16/3c729e661678484fa6048ca2dead4dfe/artifacts/triton/triton_engines
-  storageCredential: "" # mlflow s3 bucket credential
-  resources:
-    limits:
-      nvidia.com/gpu: 1
-    requests:
-      nvidia.com/gpu: 1
-
 frontend:
   replicaCount: 1
   name: frontend
@@ -83,12 +70,7 @@ backend:
       # vehicle_detector : "yolo11s.pt" 
       # license_detector : "yolo11s_20epochs_best.pt"
       
-      # option : kserve # Option 2 ( "kserve" ): Kserve in this Helm
-      # server_token: ""
-      # vehicle_detector : "vehicle_detector" 
-      # license_detector : "license_detector"
-      
-      option : mlis # Option 3 (mlis): MLIS 
+      option : mlis # Option 2 (mlis): MLIS 
       mlis_deployment_name : ""
       mlis_deployment_namespace : ""
       server_token: ""
@@ -143,18 +125,6 @@ securityContext: {}
   # readOnlyRootFilesystem: true
   # runAsNonRoot: true
   # runAsUser: 1000
-
-resources: {}
-  # We usually recommend not to specify default resources and to leave this as a conscious
-  # choice for the user. This also increases chances charts run on environments with little
-  # resources, such as Minikube. If you do want to specify resources, uncomment the following
-  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-  # limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  # requests:
-  #   cpu: 100m
-  #   memory: 128Mi
 
 nodeSelector: {}
 
