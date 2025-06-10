@@ -1,7 +1,6 @@
 # Default values for lp-number-detection.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
-
 inferenceService:
   enabled: false
   image: "nvcr.io/nvidia/tritonserver:25.02-py3"
@@ -22,7 +21,7 @@ frontend:
     repository: geuntakroh/lp-number-frontend
     pullPolicy: IfNotPresent
     # Overrides the image tag whose default is the chart appVersion.
-    tag: "v0.2"
+    tag: "v1.0.0"
   service:
     type: ClusterIP
     port: 80
@@ -50,6 +49,13 @@ frontend:
     httpGet:
       path: /
       port: http
+  resources:
+    requests:
+      cpu: 4
+      memory: 4Gi
+    limits:
+      cpu: 8
+      memory: 8Gi
 
 backend:
   replicaCount: 1
@@ -58,7 +64,7 @@ backend:
     repository: geuntakroh/lp-number-backend
     pullPolicy: IfNotPresent
     # Overrides the image tag whose default is the chart appVersion.
-    tag: "v0.2"
+    tag: "v1.0.0"
   
   service:
     type: ClusterIP
@@ -78,9 +84,9 @@ backend:
       # license_detector : "license_detector"
       
       # option : mlis # Option 3 (mlis): MLIS 
-      # mlis_deployment_name : "triton-test"
-      # mlis_deployment_namespace : "myname"
-      # server_token: "abcd"
+      # mlis_deployment_name : ""
+      # mlis_deployment_namespace : ""
+      # server_token: ""
       # vehicle_detector : "vehicle_detector" 
       # license_detector : "license_detector"
 
@@ -96,6 +102,13 @@ backend:
     - name: config-volume
       mountPath: /app/config.yaml
       subPath: config.yaml
+  resources:
+    requests:
+      cpu: 4
+      memory: 4Gi
+    limits:
+      cpu: 12
+      memory: 16Gi
 
 
 imagePullSecrets: []
@@ -119,24 +132,6 @@ podLabels: {}
 podSecurityContext: {}
 
 securityContext: {}
-  # capabilities:
-  #   drop:
-  #   - ALL
-  # readOnlyRootFilesystem: true
-  # runAsNonRoot: true
-  # runAsUser: 1000
-
-resources: {}
-  # We usually recommend not to specify default resources and to leave this as a conscious
-  # choice for the user. This also increases chances charts run on environments with little
-  # resources, such as Minikube. If you do want to specify resources, uncomment the following
-  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-  # limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  # requests:
-  #   cpu: 100m
-  #   memory: 128Mi
 
 nodeSelector: {}
 
