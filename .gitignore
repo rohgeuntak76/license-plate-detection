@@ -4,7 +4,7 @@ backend/models/yolo11n.pt
 backend/models/yolo11s.pt
 backend/.EasyOCR
 finetune/yolo11*.pt
-models/yolo11s.pt
+models/artifact_downloads/14be0ff37e03403b9f50b3cd4e8dd7a5/weights/converted
 finetune/artifact_downloads
 *.zip
 License\ Plate\ Recognition.v4-resized640_aug3x-accurate.yolov11/
