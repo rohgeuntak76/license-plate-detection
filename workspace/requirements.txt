@@ -1,0 +1,2 @@
+ultralytics==8.3.144
+tensorrt==10.8.0.43

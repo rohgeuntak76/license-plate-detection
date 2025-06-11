@@ -1,0 +1,89 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: "s3-proxy-kserve-secret"
+  annotations:
+    serving.kserve.io/s3-cabundle: ""
+    serving.kserve.io/s3-endpoint: "local-s3-service.ezdata-system.svc.cluster.local:30000/"
+    serving.kserve.io/s3-useanoncredential: "false"
+    serving.kserve.io/s3-usehttps: "0"
+    serving.kserve.io/s3-verifyssl: "0"
+stringData:
+  AWS_ACCESS_KEY_ID: "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJneExEamtYbDBTTHNGWGp6TXFPQ3E4bjEzdmJ4RXhmeUM1M1lCOGVCRGdzIn0.eyJleHAiOjE3NDg1MDI5OTYsImlhdCI6MTc0ODUwMTE5NiwiYXV0aF90aW1lIjoxNzQ4Mzk2NDcxLCJqdGkiOiIxYWMwNzM4Yy0xYWZiLTQ1NGYtYmM3Zi1mNWMyOGQ2NzVlMDEiLCJpc3MiOiJodHRwczovL2tleWNsb2FrLmluZ3Jlc3MucGNhaTAxMDMuc3k2LmhwZWNvbG8ubmV0L3JlYWxtcy9VQSIsInN1YiI6IjZlMDY0YTc0LTAyZmEtNGZjOC1iNTk0LThiYzgwMDE4MDQ4YSIsInR5cCI6IkJlYXJlciIsImF6cCI6InVhIiwibm9uY2UiOiJVMEVtQXNfRXFsV0stOHUyZ0FUeDRaMmJTVjNvTnc2ZVRxeUY2OXVic2hrIiwic2Vzc2lvbl9zdGF0ZSI6ImZjNDAyMTJhLTBjZDItNDZhMC1hZjJkLTFkZDY5ZmJiMWRkOCIsImFjciI6IjEiLCJzY29wZSI6Im9wZW5pZCBlbWFpbCBwcm9maWxlIG9mZmxpbmVfYWNjZXNzIHN5NnMxNzFyMTA6dWEiLCJzaWQiOiJmYzQwMjEyYS0wY2QyLTQ2YTAtYWYyZC0xZGQ2OWZiYjFkZDgiLCJ1aWQiOiIxMDAwMDAwOCIsImVtYWlsX3ZlcmlmaWVkIjpmYWxzZSwiZ2lkIjoiMTAwMSIsIm5hbWUiOiJHZXVuIFRhayBSb2giLCJuYW1lc3BhY2UiOiJnZXVuLXRhay1yb2gtaHAtNTdmNjlkNDciLCJncm91cHMiOlsidWEtZW5hYmxlZCIsIm9mZmxpbmVfYWNjZXNzIiwiYWRtaW4iLCJ1bWFfYXV0aG9yaXphdGlvbiIsImRlZmF1bHQtcm9sZXMtdWEiXSwicHJlZmVycmVkX3VzZXJuYW1lIjoiZ2V1bi10YWsucm9oLWhwZS5jb20iLCJnaXZlbl9uYW1lIjoiR2V1biBUYWsiLCJwb3NpeF91c2VybmFtZSI6ImdldW4tdGFrLnJvaC1ocGUuY29tIiwiZmFtaWx5X25hbWUiOiJSb2giLCJlbWFpbCI6ImdldW4tdGFrLnJvaEBocGUuY29tIn0.WpBrLt-_E8xUf3eGPrrk47pOFWRNOsoY0wb39BA8KhzBvxUq3lUP3c3v89BrXhbBEzq8WvZ15S7THi7crM0KIZ96-HeNh8Fh8SJfGn0VU3LsabVjne-4M4yzhxpbbcnW6WrnBwaQTygYNyejcdRCZZ9Hhtjg2H_6dJz7MvnUHI1HzMD4mFg99tKb-vXMKWN9xT975PpI5PPPCvrKBI3jPanL3TuCQPP4lvECQVZpAFz5TaMydfN2TRLuCLEDUZvgU6Ggn8KK1nRTLGCiufgy9RAuD7IfBXPTb4tomxM8uJHIelIm6H3ufJBYaU_YDJUTl6fx2MLJJ8WMR5dYMsYNUA"
+  AWS_SECRET_ACCESS_KEY: "s3"
+type: Opaque
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: triton-server
+  labels:
+    app: triton-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: triton-server
+  template:
+    metadata:
+      labels:
+        app: triton-server
+    spec:
+      #serviceAccountName: "s3-proxy-kserve-sa"
+      containers:
+        - name: triton-server
+          image: nvcr.io/nvidia/tritonserver:25.02-py3
+          resources:
+            limits:
+              nvidia.com/gpu: 1
+
+          args:
+            - tritonserver
+            - '--model-repository=s3://http://local-s3-service.ezdata-system.svc.cluster.local:30000/mlflow.sy6s171r10/16/dca1aa6a11ca400abd96392cc854c600/artifacts/triton/triton_engines'
+            - '--log-verbose=2'
+          env:
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  key: AWS_ACCESS_KEY_ID
+                  name: s3-proxy-kserve-secret
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  key: AWS_SECRET_ACCESS_KEY
+                  name: s3-proxy-kserve-secret
+          ports:
+            - containerPort: 8000
+              name: http
+            - containerPort: 8001
+              name: grpc
+            - containerPort: 8002
+              name: metrics
+          livenessProbe:
+            initialDelaySeconds: 15
+            failureThreshold: 3
+            periodSeconds: 10
+            httpGet:
+              path: /v2/health/live
+              port: http
+          readinessProbe:
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 3
+            httpGet:
+              path: /v2/health/ready
+              port: http
+          startupProbe:
+            # allows Triton to load the models during 30*10 = 300 sec = 5 min
+            # starts checking the other probes only after the success of this one
+            # for details, see https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-startup-probes
+            periodSeconds: 10
+            failureThreshold: 30
+            httpGet:
+              path: /v2/health/ready
+              port: http
+
+      # securityContext:
+      #   runAsUser: 1000
+      #   fsGroup: 1000

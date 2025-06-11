@@ -1,0 +1,93 @@
+---
+apiVersion: serving.kserve.io/v1alpha1
+kind: ServingRuntime
+metadata:
+  generation: 1
+  name: kserve-tritonserver-ngc
+spec:
+  annotations:
+    prometheus.kserve.io/path: /metrics
+    prometheus.kserve.io/port: "8002"
+  containers:
+  - args:
+    - tritonserver
+    - --model-store=/mnt/models
+    - --grpc-port=9000
+    - --http-port=8080
+    - --allow-grpc=true
+    - --allow-http=true
+    image: nvcr.io/nvidia/tritonserver:25.02-py3
+    name: kserve-container
+    resources:
+      limits:
+        cpu: "1"
+        memory: 2Gi
+      requests:
+        cpu: "1"
+        memory: 2Gi
+  protocolVersions:
+  - v2
+  - grpc-v2
+  supportedModelFormats:
+  - autoSelect: true
+    name: tensorrt
+    priority: 1
+    version: "8"
+  - autoSelect: true
+    name: tensorflow
+    priority: 1
+    version: "1"
+  - autoSelect: true
+    name: tensorflow
+    priority: 1
+    version: "2"
+  - autoSelect: true
+    name: onnx
+    priority: 1
+    version: "1"
+  - name: pytorch
+    version: "1"
+  - autoSelect: true
+    name: triton
+    priority: 1
+    version: "2"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: "triton-s3-proxy"
+  annotations:
+    serving.kserve.io/s3-cabundle: ""
+    serving.kserve.io/s3-endpoint: "local-s3-service.ezdata-system.svc.cluster.local:30000/"
+    serving.kserve.io/s3-useanoncredential: "false"
+    serving.kserve.io/s3-usehttps: "0"
+    serving.kserve.io/s3-verifyssl: "0"
+stringData:
+  AWS_ACCESS_KEY_ID: "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJneExEamtYbDBTTHNGWGp6TXFPQ3E4bjEzdmJ4RXhmeUM1M1lCOGVCRGdzIn0.eyJleHAiOjE3NDg1MDc3NTYsImlhdCI6MTc0ODUwNTk1NiwiYXV0aF90aW1lIjoxNzQ4Mzk2NDcxLCJqdGkiOiIwMzNmY2U3OS0zZjc1LTQxYjAtYTA2Yi1lMzEwYjI4YzJjODkiLCJpc3MiOiJodHRwczovL2tleWNsb2FrLmluZ3Jlc3MucGNhaTAxMDMuc3k2LmhwZWNvbG8ubmV0L3JlYWxtcy9VQSIsInN1YiI6IjZlMDY0YTc0LTAyZmEtNGZjOC1iNTk0LThiYzgwMDE4MDQ4YSIsInR5cCI6IkJlYXJlciIsImF6cCI6InVhIiwibm9uY2UiOiJVMEVtQXNfRXFsV0stOHUyZ0FUeDRaMmJTVjNvTnc2ZVRxeUY2OXVic2hrIiwic2Vzc2lvbl9zdGF0ZSI6ImZjNDAyMTJhLTBjZDItNDZhMC1hZjJkLTFkZDY5ZmJiMWRkOCIsImFjciI6IjEiLCJzY29wZSI6Im9wZW5pZCBlbWFpbCBwcm9maWxlIG9mZmxpbmVfYWNjZXNzIHN5NnMxNzFyMTA6dWEiLCJzaWQiOiJmYzQwMjEyYS0wY2QyLTQ2YTAtYWYyZC0xZGQ2OWZiYjFkZDgiLCJ1aWQiOiIxMDAwMDAwOCIsImVtYWlsX3ZlcmlmaWVkIjpmYWxzZSwiZ2lkIjoiMTAwMSIsIm5hbWUiOiJHZXVuIFRhayBSb2giLCJuYW1lc3BhY2UiOiJnZXVuLXRhay1yb2gtaHAtNTdmNjlkNDciLCJncm91cHMiOlsidWEtZW5hYmxlZCIsIm9mZmxpbmVfYWNjZXNzIiwiYWRtaW4iLCJ1bWFfYXV0aG9yaXphdGlvbiIsImRlZmF1bHQtcm9sZXMtdWEiXSwicHJlZmVycmVkX3VzZXJuYW1lIjoiZ2V1bi10YWsucm9oLWhwZS5jb20iLCJnaXZlbl9uYW1lIjoiR2V1biBUYWsiLCJwb3NpeF91c2VybmFtZSI6ImdldW4tdGFrLnJvaC1ocGUuY29tIiwiZmFtaWx5X25hbWUiOiJSb2giLCJlbWFpbCI6ImdldW4tdGFrLnJvaEBocGUuY29tIn0.cqyS76fG25eSUQSxOIQ-i1aWwPwkWFLJY91aH_tXDGOj34UaksSjnSz3JrhlUK_pUVS8KBTDSyvJC2TEwje6DXIyncIfRQR7iF704d449wSsASsG0NwxBKvZ4cweHxdYThC16uGyr3LUYdSoCnfxfXvKZdeG-JsFJDz0vyQukVzVdpugmhGOZUhgJ6jAm1xCCAkB867nPxma4vrxpYEFB21JuQJRpoCYTnh_WspBn_AGbyrmxhH0NIhYh9cnH7D6bv9ImEhIQzRJ-hs5yIPF_bXC9ZFXujbxVaXExhFNRy3f3EjPObfId5FHlwpJ-p3rEsKcHwCFtCpo_sONWeBgMw"
+  AWS_SECRET_ACCESS_KEY: "s3"
+type: Opaque
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: "s3-proxy-kserve-sa"
+secrets:
+  - name: "triton-s3-proxy"
+---
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: license-plate-detector-engines
+spec:
+  predictor:
+    serviceAccountName: "s3-proxy-kserve-sa"
+    model:
+      modelFormat:
+        name: triton
+      storageUri: "s3://mlflow.sy6s171r10/16/3c729e661678484fa6048ca2dead4dfe/artifacts/triton/triton_engines"
+      runtime: kserve-tritonserver-ngc
+      resources:
+        limits:
+          nvidia.com/gpu: 1
+        requests:
+          nvidia.com/gpu: 1

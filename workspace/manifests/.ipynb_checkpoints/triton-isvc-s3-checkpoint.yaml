@@ -1,0 +1,41 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: "s3-proxy-kserve-secret"
+  annotations:
+    serving.kserve.io/s3-cabundle: ""
+    serving.kserve.io/s3-endpoint: "local-s3-service.ezdata-system.svc.cluster.local:30000/"
+    serving.kserve.io/s3-useanoncredential: "false"
+    serving.kserve.io/s3-usehttps: "0"
+    serving.kserve.io/s3-verifyssl: "0"
+stringData:
+  AWS_ACCESS_KEY_ID: "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJneExEamtYbDBTTHNGWGp6TXFPQ3E4bjEzdmJ4RXhmeUM1M1lCOGVCRGdzIn0.eyJleHAiOjE3NDg1MDQxODYsImlhdCI6MTc0ODUwMjM4NiwiYXV0aF90aW1lIjoxNzQ4Mzk2NDcxLCJqdGkiOiJmMzBiNzliZi0zYTMwLTRiYTAtOTQ0NC1hZTUyNmVmNTk2NjEiLCJpc3MiOiJodHRwczovL2tleWNsb2FrLmluZ3Jlc3MucGNhaTAxMDMuc3k2LmhwZWNvbG8ubmV0L3JlYWxtcy9VQSIsInN1YiI6IjZlMDY0YTc0LTAyZmEtNGZjOC1iNTk0LThiYzgwMDE4MDQ4YSIsInR5cCI6IkJlYXJlciIsImF6cCI6InVhIiwibm9uY2UiOiJVMEVtQXNfRXFsV0stOHUyZ0FUeDRaMmJTVjNvTnc2ZVRxeUY2OXVic2hrIiwic2Vzc2lvbl9zdGF0ZSI6ImZjNDAyMTJhLTBjZDItNDZhMC1hZjJkLTFkZDY5ZmJiMWRkOCIsImFjciI6IjEiLCJzY29wZSI6Im9wZW5pZCBlbWFpbCBwcm9maWxlIG9mZmxpbmVfYWNjZXNzIHN5NnMxNzFyMTA6dWEiLCJzaWQiOiJmYzQwMjEyYS0wY2QyLTQ2YTAtYWYyZC0xZGQ2OWZiYjFkZDgiLCJ1aWQiOiIxMDAwMDAwOCIsImVtYWlsX3ZlcmlmaWVkIjpmYWxzZSwiZ2lkIjoiMTAwMSIsIm5hbWUiOiJHZXVuIFRhayBSb2giLCJuYW1lc3BhY2UiOiJnZXVuLXRhay1yb2gtaHAtNTdmNjlkNDciLCJncm91cHMiOlsidWEtZW5hYmxlZCIsIm9mZmxpbmVfYWNjZXNzIiwiYWRtaW4iLCJ1bWFfYXV0aG9yaXphdGlvbiIsImRlZmF1bHQtcm9sZXMtdWEiXSwicHJlZmVycmVkX3VzZXJuYW1lIjoiZ2V1bi10YWsucm9oLWhwZS5jb20iLCJnaXZlbl9uYW1lIjoiR2V1biBUYWsiLCJwb3NpeF91c2VybmFtZSI6ImdldW4tdGFrLnJvaC1ocGUuY29tIiwiZmFtaWx5X25hbWUiOiJSb2giLCJlbWFpbCI6ImdldW4tdGFrLnJvaEBocGUuY29tIn0.RqhX3UyX_gHEzsDrIX-qJ53mA1UyZDTHFGvD2Jt7uRqWGA_duo7FQg6uW77qVWWP75HThTuwhpxrK5S7dAVCLNfWG2sBPJ4bKljrlRtzmlAlsifRlBC-KXTuT4sP3CsXWb2g8khfLU_RyfBgeR5Q02DPfr6iItvU3tSrveX24wJB0Ms1znaqXdd0hvUIDzRO1615wZcs4Opz5CRKcZn_W9BaGfWM-KtPYY7GW-eLZtUpSQ_iuHxkYDk-l2Yioj-5xhzIWULgp8FipDD5RFHI4g7g8wdA6royN7PcqVvXXN6LeZ8XSqjZE5x_GGG2lm-fkKxhcz1dve2JGI1i-CnMdw"
+  AWS_SECRET_ACCESS_KEY: "s3"
+type: Opaque
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: "s3-proxy-kserve-sa"
+secrets:
+  - name: "s3-proxy-kserve-secret"
+---
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: triton-yolo 
+spec:
+  predictor:
+    serviceAccountName: "s3-proxy-kserve-sa"
+    model:
+      modelFormat:
+        name: triton
+      storageUri: "s3://mlflow.sy6s171r10/16/3c729e661678484fa6048ca2dead4dfe/artifacts/triton/triton_engines"
+      #runtime: kserve-tritonserver
+      runtime: kserve-tritonserver-ngc
+      resources:
+        limits:
+          nvidia.com/gpu: 1
+        requests:
+          nvidia.com/gpu: 1

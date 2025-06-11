@@ -1,0 +1,265 @@
+
+Benchmarks complete for /mnt/user/license_detection/finetune/artifact_downloads/14be0ff37e03403b9f50b3cd4e8dd7a5/weights/best.pt on ./datasets/data.yaml at imgsz=160 (12.74s)
+Benchmarks legend:  - ✅ Success  - ❎ Export passed but validation failed  - ❌️ Export failed
+        Format Status❔  Size (MB)  metrics/mAP50-95(B)  Inference time (ms/im)     FPS
+0  TorchScript       ✅       36.4               0.4434                    2.14  466.14
+
+Benchmarks complete for /mnt/user/license_detection/finetune/artifact_downloads/14be0ff37e03403b9f50b3cd4e8dd7a5/weights/best.pt on ./datasets/data.yaml at imgsz=160 (11.21s)
+Benchmarks legend:  - ✅ Success  - ❎ Export passed but validation failed  - ❌️ Export failed
+  Format Status❔  Size (MB)  metrics/mAP50-95(B)  Inference time (ms/im)     FPS
+0   ONNX       ✅       36.0               0.4434                    2.03  493.47
+
+Benchmarks complete for /mnt/user/license_detection/finetune/artifact_downloads/14be0ff37e03403b9f50b3cd4e8dd7a5/weights/best.pt on ./datasets/data.yaml at imgsz=160 (13.35s)
+Benchmarks legend:  - ✅ Success  - ❎ Export passed but validation failed  - ❌️ Export failed
+    Format Status❔  Size (MB)  metrics/mAP50-95(B)  Inference time (ms/im)    FPS
+0  PyTorch       ✅       18.3               0.4663                    3.74  267.4
+
+Benchmarks complete for /mnt/user/license_detection/finetune/artifact_downloads/14be0ff37e03403b9f50b3cd4e8dd7a5/weights/best.pt on ./datasets/data.yaml at imgsz=160 (100.60s)
+Benchmarks legend:  - ✅ Success  - ❎ Export passed but validation failed  - ❌️ Export failed
+     Format Status❔  Size (MB)  metrics/mAP50-95(B)  Inference time (ms/im)     FPS
+0  TensorRT       ✅       44.1               0.4434                    1.13  882.74
+
+Benchmarks complete for /mnt/user/license_detection/finetune/artifact_downloads/14be0ff37e03403b9f50b3cd4e8dd7a5/weights/best.pt on ./datasets/data.yaml at imgsz=160 (13.27s)
+Benchmarks legend:  - ✅ Success  - ❎ Export passed but validation failed  - ❌️ Export failed
+    Format Status❔  Size (MB)  metrics/mAP50-95(B)  Inference time (ms/im)    FPS
+0  PyTorch       ✅       18.3               0.4663                    3.85  259.9
+
+Benchmarks complete for /mnt/user/license_detection/finetune/artifact_downloads/14be0ff37e03403b9f50b3cd4e8dd7a5/weights/best.pt on ./datasets/data.yaml at imgsz=160 (14.66s)
+Benchmarks legend:  - ✅ Success  - ❎ Export passed but validation failed  - ❌️ Export failed
+    Format Status❔  Size (MB)  metrics/mAP50-95(B)  Inference time (ms/im)     FPS
+0  PyTorch       ✅       18.3               0.4663                    3.76  265.58
+
+Benchmarks complete for /mnt/user/license_detection/finetune/artifact_downloads/14be0ff37e03403b9f50b3cd4e8dd7a5/weights/best.pt on ./datasets/data.yaml at imgsz=160 (10.68s)
+Benchmarks legend:  - ✅ Success  - ❎ Export passed but validation failed  - ❌️ Export failed
+        Format Status❔  Size (MB)  metrics/mAP50-95(B)  Inference time (ms/im)     FPS
+0  TorchScript       ✅       36.4               0.4434                    2.23  448.44
+
+Benchmarks complete for /mnt/user/license_detection/finetune/artifact_downloads/14be0ff37e03403b9f50b3cd4e8dd7a5/weights/best.pt on ./datasets/data.yaml at imgsz=160 (10.11s)
+Benchmarks legend:  - ✅ Success  - ❎ Export passed but validation failed  - ❌️ Export failed
+  Format Status❔  Size (MB)  metrics/mAP50-95(B)  Inference time (ms/im)     FPS
+0   ONNX       ✅       36.0               0.4434                    2.02  494.09
+
+Benchmarks complete for /mnt/user/license_detection/finetune/artifact_downloads/14be0ff37e03403b9f50b3cd4e8dd7a5/weights/best.pt on ./datasets/data.yaml at imgsz=160 (97.45s)
+Benchmarks legend:  - ✅ Success  - ❎ Export passed but validation failed  - ❌️ Export failed
+     Format Status❔  Size (MB)  metrics/mAP50-95(B)  Inference time (ms/im)     FPS
+0  TensorRT       ✅       43.9               0.4435                    1.08  922.82
+
+Benchmarks complete for /mnt/user/license_detection/finetune/artifact_downloads/14be0ff37e03403b9f50b3cd4e8dd7a5/weights/best.pt on ./datasets/data.yaml at imgsz=160 (14.75s)
+Benchmarks legend:  - ✅ Success  - ❎ Export passed but validation failed  - ❌️ Export failed
+    Format Status❔  Size (MB)  metrics/mAP50-95(B)  Inference time (ms/im)     FPS
+0  PyTorch       ✅       18.3               0.4663                    4.03  248.09
+
+Benchmarks complete for /mnt/user/license_detection/finetune/artifact_downloads/14be0ff37e03403b9f50b3cd4e8dd7a5/weights/best.pt on ./datasets/data.yaml at imgsz=160 (10.67s)
+Benchmarks legend:  - ✅ Success  - ❎ Export passed but validation failed  - ❌️ Export failed
+        Format Status❔  Size (MB)  metrics/mAP50-95(B)  Inference time (ms/im)     FPS
+0  TorchScript       ✅       36.4               0.4434                    2.25  444.83
+
+Benchmarks complete for /mnt/user/license_detection/finetune/artifact_downloads/14be0ff37e03403b9f50b3cd4e8dd7a5/weights/best.pt on ./datasets/data.yaml at imgsz=160 (10.74s)
+Benchmarks legend:  - ✅ Success  - ❎ Export passed but validation failed  - ❌️ Export failed
+  Format Status❔  Size (MB)  metrics/mAP50-95(B)  Inference time (ms/im)     FPS
+0   ONNX       ✅       36.0               0.4434                    2.14  466.82
+
+Benchmarks complete for /mnt/user/license_detection/finetune/artifact_downloads/14be0ff37e03403b9f50b3cd4e8dd7a5/weights/best.pt on ./datasets/data.yaml at imgsz=160 (71.96s)
+Benchmarks legend:  - ✅ Success  - ❎ Export passed but validation failed  - ❌️ Export failed
+     Format Status❔  Size (MB)  metrics/mAP50-95(B)  Inference time (ms/im)     FPS
+0  TensorRT       ✅       44.2               0.4434                    1.09  917.42
+
+Benchmarks complete for /mnt/user/license_detection/finetune/artifact_downloads/14be0ff37e03403b9f50b3cd4e8dd7a5/weights/best.pt on ./datasets/data.yaml at imgsz=160 (15.14s)
+Benchmarks legend:  - ✅ Success  - ❎ Export passed but validation failed  - ❌️ Export failed
+    Format Status❔  Size (MB)  metrics/mAP50-95(B)  Inference time (ms/im)     FPS
+0  PyTorch       ✅       18.3               0.4661                    3.97  252.11
+
+Benchmarks complete for /mnt/user/license_detection/finetune/artifact_downloads/14be0ff37e03403b9f50b3cd4e8dd7a5/weights/best.pt on ./datasets/data.yaml at imgsz=160 (13.84s)
+Benchmarks legend:  - ✅ Success  - ❎ Export passed but validation failed  - ❌️ Export failed
+    Format Status❔  Size (MB)  metrics/mAP50-95(B)  Inference time (ms/im)     FPS
+0  PyTorch       ✅       18.3               0.4661                    4.12  242.57
+
+Benchmarks complete for /mnt/user/license_detection/finetune/artifact_downloads/14be0ff37e03403b9f50b3cd4e8dd7a5/weights/best.pt on ./datasets/data.yaml at imgsz=160 (11.83s)
+Benchmarks legend:  - ✅ Success  - ❎ Export passed but validation failed  - ❌️ Export failed
+        Format Status❔  Size (MB)  metrics/mAP50-95(B)  Inference time (ms/im)     FPS
+0  TorchScript       ✅       36.4               0.4434                    2.36  424.42
+
+Benchmarks complete for /mnt/user/license_detection/finetune/artifact_downloads/14be0ff37e03403b9f50b3cd4e8dd7a5/weights/best.pt on ./datasets/data.yaml at imgsz=160 (11.14s)
+Benchmarks legend:  - ✅ Success  - ❎ Export passed but validation failed  - ❌️ Export failed
+  Format Status❔  Size (MB)  metrics/mAP50-95(B)  Inference time (ms/im)     FPS
+0   ONNX       ✅       18.0                0.443                     2.4  416.36
+
+Benchmarks complete for /mnt/user/license_detection/finetune/artifact_downloads/14be0ff37e03403b9f50b3cd4e8dd7a5/weights/best.pt on ./datasets/data.yaml at imgsz=160 (238.46s)
+Benchmarks legend:  - ✅ Success  - ❎ Export passed but validation failed  - ❌️ Export failed
+     Format Status❔  Size (MB)  metrics/mAP50-95(B)  Inference time (ms/im)     FPS
+0  TensorRT       ✅       20.0               0.4435                    0.69  1453.2
+
+Benchmarks complete for /mnt/user/license_detection/finetune/artifact_downloads/14be0ff37e03403b9f50b3cd4e8dd7a5/weights/best.pt on ./datasets/data.yaml at imgsz=160 (14.94s)
+Benchmarks legend:  - ✅ Success  - ❎ Export passed but validation failed  - ❌️ Export failed
+    Format Status❔  Size (MB)  metrics/mAP50-95(B)  Inference time (ms/im)     FPS
+0  PyTorch       ✅       18.3               0.4663                    3.77  265.34
+
+Benchmarks complete for /mnt/user/license_detection/finetune/artifact_downloads/14be0ff37e03403b9f50b3cd4e8dd7a5/weights/best.pt on ./datasets/data.yaml at imgsz=160 (12.55s)
+Benchmarks legend:  - ✅ Success  - ❎ Export passed but validation failed  - ❌️ Export failed
+    Format Status❔  Size (MB)  metrics/mAP50-95(B)  Inference time (ms/im)     FPS
+0  PyTorch       ✅       18.3               0.4661                    3.78  264.31
+
+Benchmarks complete for /mnt/user/license_detection/finetune/artifact_downloads/14be0ff37e03403b9f50b3cd4e8dd7a5/weights/best.pt on ./datasets/data.yaml at imgsz=160 (10.44s)
+Benchmarks legend:  - ✅ Success  - ❎ Export passed but validation failed  - ❌️ Export failed
+        Format Status❔  Size (MB)  metrics/mAP50-95(B)  Inference time (ms/im)     FPS
+0  TorchScript       ✅       36.4               0.4434                    2.18  458.25
+
+Benchmarks complete for /mnt/user/license_detection/finetune/artifact_downloads/14be0ff37e03403b9f50b3cd4e8dd7a5/weights/best.pt on ./datasets/data.yaml at imgsz=160 (11.26s)
+Benchmarks legend:  - ✅ Success  - ❎ Export passed but validation failed  - ❌️ Export failed
+        Format Status❔  Size (MB)  metrics/mAP50-95(B)  Inference time (ms/im)     FPS
+0  TorchScript       ✅       36.4               0.4434                    2.33  429.16
+
+Benchmarks complete for /mnt/user/license_detection/finetune/artifact_downloads/14be0ff37e03403b9f50b3cd4e8dd7a5/weights/best.pt on ./datasets/data.yaml at imgsz=160 (10.15s)
+Benchmarks legend:  - ✅ Success  - ❎ Export passed but validation failed  - ❌️ Export failed
+  Format Status❔  Size (MB)  metrics/mAP50-95(B)  Inference time (ms/im)    FPS
+0   ONNX       ✅       36.0               0.4434                    2.09  477.7
+
+Benchmarks complete for /mnt/user/license_detection/finetune/artifact_downloads/14be0ff37e03403b9f50b3cd4e8dd7a5/weights/best.pt on ./datasets/data.yaml at imgsz=160 (11.08s)
+Benchmarks legend:  - ✅ Success  - ❎ Export passed but validation failed  - ❌️ Export failed
+  Format Status❔  Size (MB)  metrics/mAP50-95(B)  Inference time (ms/im)     FPS
+0   ONNX       ✅       18.0                0.443                    2.21  452.35
+
+Benchmarks complete for /mnt/user/license_detection/finetune/artifact_downloads/14be0ff37e03403b9f50b3cd4e8dd7a5/weights/best.pt on ./datasets/data.yaml at imgsz=160 (99.28s)
+Benchmarks legend:  - ✅ Success  - ❎ Export passed but validation failed  - ❌️ Export failed
+     Format Status❔  Size (MB)  metrics/mAP50-95(B)  Inference time (ms/im)     FPS
+0  TensorRT       ✅       44.4               0.4434                     1.1  910.54
+
+Benchmarks complete for /mnt/user/license_detection/finetune/artifact_downloads/14be0ff37e03403b9f50b3cd4e8dd7a5/weights/best.pt on ./datasets/data.yaml at imgsz=160 (237.43s)
+Benchmarks legend:  - ✅ Success  - ❎ Export passed but validation failed  - ❌️ Export failed
+     Format Status❔  Size (MB)  metrics/mAP50-95(B)  Inference time (ms/im)      FPS
+0  TensorRT       ✅       19.8               0.4435                    0.67  1500.89
+
+Benchmarks complete for /mnt/user/license_detection/finetune/artifact_downloads/14be0ff37e03403b9f50b3cd4e8dd7a5/weights/best.pt on ./datasets/data.yaml at imgsz=160 (13.95s)
+Benchmarks legend:  - ✅ Success  - ❎ Export passed but validation failed  - ❌️ Export failed
+    Format Status❔  Size (MB)  metrics/mAP50-95(B)  Inference time (ms/im)     FPS
+0  PyTorch       ✅       18.3               0.4663                    3.82  261.54
+
+Benchmarks complete for /mnt/user/license_detection/finetune/artifact_downloads/14be0ff37e03403b9f50b3cd4e8dd7a5/weights/best.pt on ./datasets/data.yaml at imgsz=160 (13.17s)
+Benchmarks legend:  - ✅ Success  - ❎ Export passed but validation failed  - ❌️ Export failed
+    Format Status❔  Size (MB)  metrics/mAP50-95(B)  Inference time (ms/im)     FPS
+0  PyTorch       ✅       18.3               0.4661                    3.87  258.33
+
+Benchmarks complete for /mnt/user/license_detection/finetune/artifact_downloads/14be0ff37e03403b9f50b3cd4e8dd7a5/weights/best.pt on ./datasets/data.yaml at imgsz=160 (13.49s)
+Benchmarks legend:  - ✅ Success  - ❎ Export passed but validation failed  - ❌️ Export failed
+    Format Status❔  Size (MB)  metrics/mAP50-95(B)  Inference time (ms/im)     FPS
+0  PyTorch       ✅       18.3               0.4663                    3.72  268.98
+
+Benchmarks complete for /mnt/user/license_detection/finetune/artifact_downloads/14be0ff37e03403b9f50b3cd4e8dd7a5/weights/best.pt on ./datasets/data.yaml at imgsz=160 (13.27s)
+Benchmarks legend:  - ✅ Success  - ❎ Export passed but validation failed  - ❌️ Export failed
+    Format Status❔  Size (MB)  metrics/mAP50-95(B)  Inference time (ms/im)     FPS
+0  PyTorch       ✅       18.3               0.4661                    3.92  255.24
+
+Benchmarks complete for /mnt/user/license_detection/finetune/artifact_downloads/14be0ff37e03403b9f50b3cd4e8dd7a5/weights/best.pt on ./datasets/data.yaml at imgsz=160 (10.96s)
+Benchmarks legend:  - ✅ Success  - ❎ Export passed but validation failed  - ❌️ Export failed
+        Format Status❔  Size (MB)  metrics/mAP50-95(B)  Inference time (ms/im)     FPS
+0  TorchScript       ✅       36.4               0.4434                    2.33  429.71
+
+Benchmarks complete for /mnt/user/license_detection/finetune/artifact_downloads/14be0ff37e03403b9f50b3cd4e8dd7a5/weights/best.pt on ./datasets/data.yaml at imgsz=160 (10.81s)
+Benchmarks legend:  - ✅ Success  - ❎ Export passed but validation failed  - ❌️ Export failed
+        Format Status❔  Size (MB)  metrics/mAP50-95(B)  Inference time (ms/im)     FPS
+0  TorchScript       ✅       36.4               0.4434                    2.29  437.06
+
+Benchmarks complete for /mnt/user/license_detection/finetune/artifact_downloads/14be0ff37e03403b9f50b3cd4e8dd7a5/weights/best.pt on ./datasets/data.yaml at imgsz=160 (10.06s)
+Benchmarks legend:  - ✅ Success  - ❎ Export passed but validation failed  - ❌️ Export failed
+  Format Status❔  Size (MB)  metrics/mAP50-95(B)  Inference time (ms/im)     FPS
+0   ONNX       ✅       36.0               0.4434                    2.05  487.15
+
+Benchmarks complete for /mnt/user/license_detection/finetune/artifact_downloads/14be0ff37e03403b9f50b3cd4e8dd7a5/weights/best.pt on ./datasets/data.yaml at imgsz=160 (10.63s)
+Benchmarks legend:  - ✅ Success  - ❎ Export passed but validation failed  - ❌️ Export failed
+  Format Status❔  Size (MB)  metrics/mAP50-95(B)  Inference time (ms/im)     FPS
+0   ONNX       ✅       18.0                0.443                    2.24  446.08
+
+Benchmarks complete for /mnt/user/license_detection/finetune/artifact_downloads/14be0ff37e03403b9f50b3cd4e8dd7a5/weights/best.pt on ./datasets/data.yaml at imgsz=160 (97.40s)
+Benchmarks legend:  - ✅ Success  - ❎ Export passed but validation failed  - ❌️ Export failed
+     Format Status❔  Size (MB)  metrics/mAP50-95(B)  Inference time (ms/im)     FPS
+0  TensorRT       ✅       44.3               0.4434                    1.08  923.45
+
+Benchmarks complete for /mnt/user/license_detection/finetune/artifact_downloads/14be0ff37e03403b9f50b3cd4e8dd7a5/weights/best.pt on ./datasets/data.yaml at imgsz=160 (237.29s)
+Benchmarks legend:  - ✅ Success  - ❎ Export passed but validation failed  - ❌️ Export failed
+     Format Status❔  Size (MB)  metrics/mAP50-95(B)  Inference time (ms/im)      FPS
+0  TensorRT       ✅       20.0               0.4435                    0.64  1549.93
+
+Benchmarks complete for /mnt/user/license_detection/finetune/artifact_downloads/14be0ff37e03403b9f50b3cd4e8dd7a5/weights/best.pt on ./datasets/data.yaml at imgsz=160 (15.43s)
+Benchmarks legend:  - ✅ Success  - ❎ Export passed but validation failed  - ❌️ Export failed
+    Format Status❔  Size (MB)  metrics/mAP50-95(B)  Inference time (ms/im)     FPS
+0  PyTorch       ✅       18.3               0.4663                    3.85  259.49
+
+Benchmarks complete for /mnt/user/license_detection/finetune/artifact_downloads/14be0ff37e03403b9f50b3cd4e8dd7a5/weights/best.pt on ./datasets/data.yaml at imgsz=160 (13.02s)
+Benchmarks legend:  - ✅ Success  - ❎ Export passed but validation failed  - ❌️ Export failed
+    Format Status❔  Size (MB)  metrics/mAP50-95(B)  Inference time (ms/im)     FPS
+0  PyTorch       ✅       18.3               0.4661                    3.97  252.07
+
+Benchmarks complete for /mnt/user/license_detection/finetune/artifact_downloads/14be0ff37e03403b9f50b3cd4e8dd7a5/weights/best.pt on ./datasets/data.yaml at imgsz=160 (10.80s)
+Benchmarks legend:  - ✅ Success  - ❎ Export passed but validation failed  - ❌️ Export failed
+        Format Status❔  Size (MB)  metrics/mAP50-95(B)  Inference time (ms/im)    FPS
+0  TorchScript       ✅       36.4               0.4434                    2.29  436.5
+
+Benchmarks complete for /mnt/user/license_detection/finetune/artifact_downloads/14be0ff37e03403b9f50b3cd4e8dd7a5/weights/best.pt on ./datasets/data.yaml at imgsz=160 (11.04s)
+Benchmarks legend:  - ✅ Success  - ❎ Export passed but validation failed  - ❌️ Export failed
+        Format Status❔  Size (MB)  metrics/mAP50-95(B)  Inference time (ms/im)     FPS
+0  TorchScript       ✅       36.4               0.4434                    2.36  423.21
+
+Benchmarks complete for /mnt/user/license_detection/finetune/artifact_downloads/14be0ff37e03403b9f50b3cd4e8dd7a5/weights/best.pt on ./datasets/data.yaml at imgsz=160 (1.83s)
+Benchmarks legend:  - ✅ Success  - ❎ Export passed but validation failed  - ❌️ Export failed
+  Format Status❔  Size (MB) metrics/mAP50-95(B) Inference time (ms/im) FPS
+0   ONNX       ❎       36.0                   -                      -   -
+
+Benchmarks complete for /mnt/user/license_detection/finetune/artifact_downloads/14be0ff37e03403b9f50b3cd4e8dd7a5/weights/best.pt on ./datasets/data.yaml at imgsz=160 (1.14s)
+Benchmarks legend:  - ✅ Success  - ❎ Export passed but validation failed  - ❌️ Export failed
+  Format Status❔  Size (MB) metrics/mAP50-95(B) Inference time (ms/im) FPS
+0   ONNX       ❎       36.0                   -                      -   -
+
+Benchmarks complete for /mnt/user/license_detection/finetune/artifact_downloads/14be0ff37e03403b9f50b3cd4e8dd7a5/weights/best.pt on ./datasets/data.yaml at imgsz=160 (18.01s)
+Benchmarks legend:  - ✅ Success  - ❎ Export passed but validation failed  - ❌️ Export failed
+  Format Status❔  Size (MB) metrics/mAP50-95(B) Inference time (ms/im) FPS
+0   ONNX       ❎       36.0                   -                      -   -
+
+Benchmarks complete for /mnt/user/license_detection/finetune/artifact_downloads/14be0ff37e03403b9f50b3cd4e8dd7a5/weights/best.pt on ./datasets/data.yaml at imgsz=160 (11.13s)
+Benchmarks legend:  - ✅ Success  - ❎ Export passed but validation failed  - ❌️ Export failed
+  Format Status❔  Size (MB)  metrics/mAP50-95(B)  Inference time (ms/im)     FPS
+0   ONNX       ✅       36.0               0.4434                    2.03  492.31
+
+Benchmarks complete for /mnt/user/license_detection/finetune/artifact_downloads/14be0ff37e03403b9f50b3cd4e8dd7a5/weights/best.pt on ./datasets/data.yaml at imgsz=160 (13.89s)
+Benchmarks legend:  - ✅ Success  - ❎ Export passed but validation failed  - ❌️ Export failed
+    Format Status❔  Size (MB)  metrics/mAP50-95(B)  Inference time (ms/im)    FPS
+0  PyTorch       ✅       18.3               0.4663                    3.73  267.8
+
+Benchmarks complete for /mnt/user/license_detection/finetune/artifact_downloads/14be0ff37e03403b9f50b3cd4e8dd7a5/weights/best.pt on ./datasets/data.yaml at imgsz=160 (12.58s)
+Benchmarks legend:  - ✅ Success  - ❎ Export passed but validation failed  - ❌️ Export failed
+    Format Status❔  Size (MB)  metrics/mAP50-95(B)  Inference time (ms/im)     FPS
+0  PyTorch       ✅       18.3               0.4661                    3.82  261.88
+
+Benchmarks complete for /mnt/user/license_detection/finetune/artifact_downloads/14be0ff37e03403b9f50b3cd4e8dd7a5/weights/best.pt on ./datasets/data.yaml at imgsz=160 (10.55s)
+Benchmarks legend:  - ✅ Success  - ❎ Export passed but validation failed  - ❌️ Export failed
+        Format Status❔  Size (MB)  metrics/mAP50-95(B)  Inference time (ms/im)     FPS
+0  TorchScript       ✅       36.4               0.4434                    2.18  458.17
+
+Benchmarks complete for /mnt/user/license_detection/finetune/artifact_downloads/14be0ff37e03403b9f50b3cd4e8dd7a5/weights/best.pt on ./datasets/data.yaml at imgsz=160 (11.42s)
+Benchmarks legend:  - ✅ Success  - ❎ Export passed but validation failed  - ❌️ Export failed
+        Format Status❔  Size (MB)  metrics/mAP50-95(B)  Inference time (ms/im)    FPS
+0  TorchScript       ✅       36.4               0.4434                    2.25  444.9
+
+Benchmarks complete for /mnt/user/license_detection/finetune/artifact_downloads/14be0ff37e03403b9f50b3cd4e8dd7a5/weights/best.pt on ./datasets/data.yaml at imgsz=160 (10.08s)
+Benchmarks legend:  - ✅ Success  - ❎ Export passed but validation failed  - ❌️ Export failed
+  Format Status❔  Size (MB)  metrics/mAP50-95(B)  Inference time (ms/im)     FPS
+0   ONNX       ✅       36.0               0.4434                    2.03  491.49
+
+Benchmarks complete for /mnt/user/license_detection/finetune/artifact_downloads/14be0ff37e03403b9f50b3cd4e8dd7a5/weights/best.pt on ./datasets/data.yaml at imgsz=160 (10.57s)
+Benchmarks legend:  - ✅ Success  - ❎ Export passed but validation failed  - ❌️ Export failed
+  Format Status❔  Size (MB)  metrics/mAP50-95(B)  Inference time (ms/im)     FPS
+0   ONNX       ✅       18.0                0.443                    2.19  456.06
+
+Benchmarks complete for /mnt/user/license_detection/finetune/artifact_downloads/14be0ff37e03403b9f50b3cd4e8dd7a5/weights/best.pt on ./datasets/data.yaml at imgsz=160 (99.85s)
+Benchmarks legend:  - ✅ Success  - ❎ Export passed but validation failed  - ❌️ Export failed
+     Format Status❔  Size (MB)  metrics/mAP50-95(B)  Inference time (ms/im)     FPS
+0  TensorRT       ✅       44.2               0.4434                    1.09  919.13
+
+Benchmarks complete for /mnt/user/license_detection/finetune/artifact_downloads/14be0ff37e03403b9f50b3cd4e8dd7a5/weights/best.pt on ./datasets/data.yaml at imgsz=160 (238.98s)
+Benchmarks legend:  - ✅ Success  - ❎ Export passed but validation failed  - ❌️ Export failed
+     Format Status❔  Size (MB)  metrics/mAP50-95(B)  Inference time (ms/im)      FPS
+0  TensorRT       ✅       19.9               0.4436                    0.67  1496.39
+
+Benchmarks complete for /mnt/user/license_detection/finetune/artifact_downloads/14be0ff37e03403b9f50b3cd4e8dd7a5/weights/best.pt on ./datasets/data.yaml at imgsz=160 (578.13s)
+Benchmarks legend:  - ✅ Success  - ❎ Export passed but validation failed  - ❌️ Export failed
+  Format Status❔  Size (MB)  metrics/mAP50-95(B)  Inference time (ms/im)   FPS
+0   ONNX       ✅       36.0               0.4434                  176.36  5.67
