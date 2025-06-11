@@ -1,7 +1,0 @@
-Traceback (most recent call last):
-  File "/mnt/user/license_detection/finetune/finetune_with_mlflow.py", line 46, in <module>
-    main(args.epochs,args.batch)
-  File "/mnt/user/license_detection/finetune/finetune_with_mlflow.py", line 27, in main
-    update_token(dummy)
-                 ^^^^^
-NameError: name 'dummy' is not defined
