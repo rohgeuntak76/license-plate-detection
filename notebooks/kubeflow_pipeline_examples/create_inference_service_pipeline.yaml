@@ -1,0 +1,507 @@
+# PIPELINE DEFINITION
+# Name: create-inference-service-pipeline
+# Inputs:
+#    isvc_name: str
+#    model_s3_url: str
+#    namespace: str
+#    num_of_gpus: str
+#    runtime_name: str
+#    secret_name: str
+#    service_account_name: str
+components:
+  comp-create-isvc:
+    executorLabel: exec-create-isvc
+    inputDefinitions:
+      parameters:
+        isvc_name:
+          parameterType: STRING
+        model_s3_url:
+          parameterType: STRING
+        namespace:
+          parameterType: STRING
+        num_of_gpus:
+          parameterType: STRING
+        runtime_name:
+          parameterType: STRING
+        service_account_name:
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: STRING
+  comp-create-secret:
+    executorLabel: exec-create-secret
+    inputDefinitions:
+      parameters:
+        namespace:
+          parameterType: STRING
+        secret_name:
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: STRING
+  comp-create-service-account:
+    executorLabel: exec-create-service-account
+    inputDefinitions:
+      parameters:
+        namespace:
+          parameterType: STRING
+        secret_name:
+          parameterType: STRING
+        service_account_name:
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: STRING
+  comp-create-serving-runtime:
+    executorLabel: exec-create-serving-runtime
+    inputDefinitions:
+      parameters:
+        namespace:
+          parameterType: STRING
+        runtime_name:
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: STRING
+  comp-sample-inference:
+    executorLabel: exec-sample-inference
+    inputDefinitions:
+      parameters:
+        isvc_url:
+          parameterType: STRING
+    outputDefinitions:
+      artifacts:
+        license_detection_result:
+          artifactType:
+            schemaTitle: system.Artifact
+            schemaVersion: 0.0.1
+        vehicle_detection_result:
+          artifactType:
+            schemaTitle: system.Artifact
+            schemaVersion: 0.0.1
+deploymentSpec:
+  executors:
+    exec-create-isvc:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - create_isvc
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.7.0'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"\
+          $0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef create_isvc(namespace: str,service_account_name:str,runtime_name:str,isvc_name:str,model_s3_url:str,num_of_gpus:str)\
+          \ -> str:\n    import time\n    import kserve\n    from kubernetes import\
+          \ client,config,utils\n    from kubernetes.client.rest import ApiException\n\
+          \    from kserve import V1beta1InferenceService, V1beta1InferenceServiceSpec,\
+          \ V1beta1PredictorSpec,V1beta1ModelSpec,V1beta1ModelFormat\n\n\n    config.load_incluster_config()\n\
+          \    custom_api = client.CustomObjectsApi()\n\n    try:\n        ## Check\
+          \ pre-exists Inference Service\n        preexists_isvc = custom_api.get_namespaced_custom_object(\n\
+          \            group=\"serving.kserve.io\",\n            version=\"v1beta1\"\
+          ,\n            namespace=namespace,\n            plural=\"inferenceservices\"\
+          ,\n            name=isvc_name,\n        )\n        print(f\"Inference Service\
+          \ name : {preexists_isvc['metadata']['name']} exists\")\n        custom_api.delete_namespaced_custom_object(\n\
+          \            group=\"serving.kserve.io\",\n            version=\"v1beta1\"\
+          ,\n            namespace=namespace,\n            plural=\"inferenceservices\"\
+          ,\n            name=isvc_name,\n        )\n        time.sleep(3)\n    except\
+          \ ApiException as e:\n        print(\"Exception when calling CoreV1Api :\
+          \ %s\\n\" % e)\n\n    finally:\n        ## Create Inference Service snippet\
+          \ start\n        isvc_body = V1beta1InferenceService(\n            api_version='serving.kserve.io/v1beta1',\n\
+          \            kind='InferenceService',\n            metadata=client.V1ObjectMeta(\n\
+          \                name=isvc_name,\n            ),\n            spec=V1beta1InferenceServiceSpec(\n\
+          \                predictor=V1beta1PredictorSpec(\n                    service_account_name=service_account_name,\n\
+          \                    model=V1beta1ModelSpec(\n                        model_format=V1beta1ModelFormat(\n\
+          \                            name=\"triton\"\n                        ),\n\
+          \                        storage_uri=model_s3_url,\n                   \
+          \     runtime=runtime_name,\n                        resources=client.V1ResourceRequirements(\n\
+          \                            limits={\n                                \"\
+          nvidia.com/gpu\": num_of_gpus,\n                            },\n       \
+          \                     requests={\n                                \"nvidia.com/gpu\"\
+          : num_of_gpus,\n                            }\n                        )\n\
+          \                    )\n                )\n            )\n        )\n\n\n\
+          \        api = client.CustomObjectsApi()\n        api.create_namespaced_custom_object(\n\
+          \            group=\"serving.kserve.io\",\n            version=\"v1beta1\"\
+          ,\n            namespace=namespace,\n            plural=\"inferenceservices\"\
+          ,\n            body=isvc_body,\n        )\n        print(\"Inference Service\
+          \ created\")\n        time.sleep(3)\n        while True:\n            created_isvc\
+          \ = api.get_namespaced_custom_object(\n                group=\"serving.kserve.io\"\
+          ,\n                version=\"v1beta1\",\n                namespace=namespace,\n\
+          \                plural=\"inferenceservices\",\n                name=isvc_name,\n\
+          \            )\n            if created_isvc is not None:\n             \
+          \   if created_isvc.get('status') is not None: \n                    if\
+          \ created_isvc.get('status').get('address') is not None:\n             \
+          \           url = created_isvc.get('status').get('address').get('url')\n\
+          \                        print(f\"{url} is ready\")\n                  \
+          \      return url\n            print(f\"url is not ready for {created_isvc['metadata']['name']}\"\
+          )\n            time.sleep(3)\n        ## Create servingruntime snippet end\n\
+          \n"
+        image: geuntakroh/kfp-test:v0.7
+    exec-create-secret:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - create_secret
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.7.0'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"\
+          $0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef create_secret(namespace: str,secret_name: str) -> str:\n    import\
+          \ os\n    import base64\n    import kserve\n    from kubernetes import client,config,utils\n\
+          \    from kubernetes.client.rest import ApiException\n\n    config.load_incluster_config()\n\
+          \    v1 = client.CoreV1Api()\n    custom_api = client.CustomObjectsApi()\n\
+          \n    with open('/etc/secrets/ezua/.auth_token','r') as file:\n        AUTH_TOKEN\
+          \ = file.read().strip()\n\n    try:\n        ## Check pre-exists secret\n\
+          \        preexists_secret = v1.read_namespaced_secret(namespace=namespace,name=secret_name)\n\
+          \        print(f\"secret name : {preexists_secret.metadata.name} exists\"\
+          )\n        v1.delete_namespaced_secret(namespace=namespace,name=secret_name)\n\
+          \n    except ApiException as e:\n        print(\"Exception when calling\
+          \ CoreV1Api : %s\\n\" % e)\n\n    finally:\n        ## Create secret snippet\
+          \ start\n        secret_data_encoded = {\n            \"AWS_ACCESS_KEY_ID\"\
+          : base64.b64encode(AUTH_TOKEN.encode()).decode(),\n            \"AWS_SECRET_ACCESS_KEY\"\
+          : base64.b64encode(\"s3\".encode()).decode()\n        }\n\n        secret_body\
+          \ = client.V1Secret(\n            api_version=\"v1\",\n            kind=\"\
+          Secret\",\n            metadata=client.V1ObjectMeta(\n                name=secret_name,\n\
+          \                annotations={\n                    \"serving.kserve.io/s3-cabundle\"\
+          :\"\",\n                    \"serving.kserve.io/s3-endpoint\":\"local-s3-service.ezdata-system.svc.cluster.local:30000/\"\
+          ,\n                    \"serving.kserve.io/s3-useanoncredential\":\"false\"\
+          ,\n                    \"serving.kserve.io/s3-usehttps\":\"0\",\n      \
+          \              \"serving.kserve.io/s3-verifyssl\":\"0\",\n             \
+          \   }\n            ),\n            type=\"Opaque\",\n            data=secret_data_encoded,\
+          \  # Use data or string_data\n        )\n\n        api_response = v1.create_namespaced_secret(namespace=namespace,\
+          \ body=secret_body)\n        print(f\"Secret '{api_response.metadata.name}'\
+          \ created successfully in namespace '{namespace}'.\\n api_response:{api_response}\"\
+          )\n        ## Create secret snippet end\n        return api_response.metadata.name\n\
+          \n"
+        image: geuntakroh/kfp-test:v0.7
+    exec-create-service-account:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - create_service_account
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.7.0'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"\
+          $0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef create_service_account(namespace: str,secret_name: str,service_account_name:\
+          \ str) -> str:\n    import kserve\n    from kubernetes import client,config,utils\n\
+          \    from kubernetes.client.rest import ApiException\n\n    config.load_incluster_config()\n\
+          \    v1 = client.CoreV1Api()\n    custom_api = client.CustomObjectsApi()\n\
+          \n    try:\n        ## Check pre-exists serviceaccount\n        preexists_sa\
+          \ = v1.read_namespaced_service_account(namespace=namespace,name=service_account_name)\n\
+          \        print(f\"Service Account name : {preexists_sa.metadata.name} exists\"\
+          )\n        v1.delete_namespaced_service_account(namespace=namespace,name=service_account_name)\n\
+          \n    except ApiException as e:\n        print(\"Exception when calling\
+          \ CoreV1Api : %s\\n\" % e)\n\n    finally:\n        ## Create Service Account\
+          \ snippet start\n        service_account_body = client.V1ServiceAccount(\n\
+          \            api_version=\"v1\",\n            kind=\"ServiceAccount\",\n\
+          \            metadata=client.V1ObjectMeta(\n                name=service_account_name,\
+          \ \n                namespace=namespace\n            ),\n            secrets=[\n\
+          \                client.V1ObjectReference(name=secret_name)\n          \
+          \  ]\n        )\n        api_response = v1.create_namespaced_service_account(\n\
+          \            namespace=namespace,\n            body=service_account_body\n\
+          \        )\n        print(f\"ServiceAccount '{api_response.metadata.name}'\
+          \ created successfully in namespace '{namespace}'.\")\n        ## Create\
+          \ Service Account snippet end\n        return api_response.metadata.name\n\
+          \n"
+        image: geuntakroh/kfp-test:v0.7
+    exec-create-serving-runtime:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - create_serving_runtime
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.7.0'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"\
+          $0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef create_serving_runtime(namespace: str,runtime_name: str) -> str:\n\
+          \    import kserve\n    from kubernetes import client,config,utils\n   \
+          \ from kubernetes.client.rest import ApiException\n    from kserve import\
+          \ V1alpha1ServingRuntime, V1alpha1ServingRuntimeSpec, V1alpha1SupportedModelFormat\n\
+          \n    config.load_incluster_config()\n    custom_api = client.CustomObjectsApi()\n\
+          \n    try:\n        ## Check pre-exists ServingRuntime\n        preexists_runtime\
+          \ = custom_api.get_namespaced_custom_object(\n            group=\"serving.kserve.io\"\
+          ,\n            version=\"v1alpha1\",\n            namespace=namespace,\n\
+          \            plural=\"servingruntimes\",\n            name=runtime_name\n\
+          \        )\n\n        print(f\"Serving Runtime name : {preexists_runtime['metadata']['name']}\
+          \ exists\")\n        custom_api.delete_namespaced_custom_object(\n     \
+          \       group=\"serving.kserve.io\",\n            version=\"v1alpha1\",\n\
+          \            namespace=namespace,\n            plural=\"servingruntimes\"\
+          ,\n            name=runtime_name\n        )\n\n    except ApiException as\
+          \ e:\n        print(\"Exception when calling CoreV1Api : %s\\n\" % e)\n\n\
+          \    finally:\n        ## Create Serving Runtime snippet start\n       \
+          \ runtime_body = V1alpha1ServingRuntime(\n            api_version='serving.kserve.io/v1alpha1',\n\
+          \            kind='ServingRuntime',\n            metadata=client.V1ObjectMeta(\n\
+          \                name=runtime_name,\n            ),\n            spec=V1alpha1ServingRuntimeSpec(\n\
+          \                annotations={\n                    \"prometheus.kserve.io/path\"\
+          :\"/metrics\",\n                    \"prometheus.kserve.io/port\":\"8002\"\
+          ,\n                },\n                containers=[\n                  \
+          \  client.V1Container(\n                        args=['tritonserver','--model-store=/mnt/models','--grpc-port=9000','--http-port=8080','--allow-grpc=true','--allow-http=true'],\n\
+          \                        image='nvcr.io/nvidia/tritonserver:25.02-py3',\n\
+          \                        name='kserve-container',\n                    \
+          \    resources=client.V1ResourceRequirements(\n                        \
+          \    limits={\n                                \"cpu\": \"1\",\n       \
+          \                         \"memory\": \"2Gi\"\n                        \
+          \    },\n                            requests={\n                      \
+          \          \"cpu\": \"1\",\n                                \"memory\":\
+          \ \"2Gi\"\n                            }\n                        )\n  \
+          \                  )\n                ],\n                protocol_versions=['v2','grpc-v2'],\n\
+          \                supported_model_formats=[\n                    V1alpha1SupportedModelFormat(auto_select=True,name='tensorrt',version='8'),\n\
+          \                    V1alpha1SupportedModelFormat(auto_select=True,name='triton',version='2'),\n\
+          \                ]\n            )\n        )\n\n        api_response = custom_api.create_namespaced_custom_object(\n\
+          \            group=\"serving.kserve.io\",\n            version=\"v1alpha1\"\
+          ,\n            namespace=namespace,\n            plural=\"servingruntimes\"\
+          ,\n            body=runtime_body,\n        )\n        print(f\"Serving Runtime\
+          \ created : {api_response['metadata']['name']}\")\n        ## Create servingruntime\
+          \ snippet end \n        return api_response['metadata']['name']\n\n"
+        image: geuntakroh/kfp-test:v0.7
+    exec-sample-inference:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - sample_inference
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.7.0'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"\
+          $0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef sample_inference(isvc_url: str, vehicle_detection_result: Output[Artifact],license_detection_result:\
+          \ Output[Artifact]):\n    from ultralytics import YOLO\n    import subprocess\n\
+          \    from urllib.parse import urlparse\n    import os\n\n    parts = urlparse(isvc_url)\n\
+          \    svc_name = parts.netloc.split('.')[0]\n    namespace = parts.netloc.split('.')[1]\n\
+          \    url_for_yolo = f\"http://{svc_name}-00001.{namespace}.svc.cluster.local\"\
+          \n\n    vehicle_detector = YOLO(f\"{url_for_yolo}/vehicle_detector\",task='detect')\n\
+          \    license_detector = YOLO(f\"{url_for_yolo}/license_detector\",task='detect')\n\
+          \n    vehicle_results = vehicle_detector(\"./Samples/multiple_cars.png\"\
+          ,save=True)\n    vehicle_output_file = vehicle_results[0].save_dir + '/'\
+          \ + os.listdir(vehicle_results[0].save_dir)[0]\n    print(vehicle_output_file)\n\
+          \    license_results = license_detector(\"./Samples/multiple_cars.png\"\
+          ,save=True)\n    license_output_file = license_results[0].save_dir + '/'\
+          \ + os.listdir(license_results[0].save_dir)[0]\n    print(license_output_file)\n\
+          \n    subprocess.run(['cp',vehicle_output_file,vehicle_detection_result.path\
+          \ ])    \n    subprocess.run(['cp',license_output_file,license_detection_result.path\
+          \ ])    \n\n"
+        image: geuntakroh/kfp-test:v0.7
+pipelineInfo:
+  name: create-inference-service-pipeline
+root:
+  dag:
+    tasks:
+      create-isvc:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-create-isvc
+        dependentTasks:
+        - create-service-account
+        - create-serving-runtime
+        inputs:
+          parameters:
+            isvc_name:
+              componentInputParameter: isvc_name
+            model_s3_url:
+              componentInputParameter: model_s3_url
+            namespace:
+              componentInputParameter: namespace
+            num_of_gpus:
+              componentInputParameter: num_of_gpus
+            runtime_name:
+              taskOutputParameter:
+                outputParameterKey: Output
+                producerTask: create-serving-runtime
+            service_account_name:
+              taskOutputParameter:
+                outputParameterKey: Output
+                producerTask: create-service-account
+        taskInfo:
+          name: create-isvc
+      create-secret:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-create-secret
+        inputs:
+          parameters:
+            namespace:
+              componentInputParameter: namespace
+            secret_name:
+              componentInputParameter: secret_name
+        taskInfo:
+          name: create-secret
+      create-service-account:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-create-service-account
+        dependentTasks:
+        - create-secret
+        inputs:
+          parameters:
+            namespace:
+              componentInputParameter: namespace
+            secret_name:
+              taskOutputParameter:
+                outputParameterKey: Output
+                producerTask: create-secret
+            service_account_name:
+              componentInputParameter: service_account_name
+        taskInfo:
+          name: create-service-account
+      create-serving-runtime:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-create-serving-runtime
+        inputs:
+          parameters:
+            namespace:
+              componentInputParameter: namespace
+            runtime_name:
+              componentInputParameter: runtime_name
+        taskInfo:
+          name: create-serving-runtime
+      sample-inference:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-sample-inference
+        dependentTasks:
+        - create-isvc
+        inputs:
+          parameters:
+            isvc_url:
+              taskOutputParameter:
+                outputParameterKey: Output
+                producerTask: create-isvc
+        taskInfo:
+          name: sample-inference
+  inputDefinitions:
+    parameters:
+      isvc_name:
+        parameterType: STRING
+      model_s3_url:
+        parameterType: STRING
+      namespace:
+        parameterType: STRING
+      num_of_gpus:
+        parameterType: STRING
+      runtime_name:
+        parameterType: STRING
+      secret_name:
+        parameterType: STRING
+      service_account_name:
+        parameterType: STRING
+schemaVersion: 2.1.0
+sdkVersion: kfp-2.7.0
+---
+platforms:
+  kubernetes:
+    deploymentSpec:
+      executors:
+        exec-create-isvc:
+          podMetadata:
+            annotations:
+              hpe-ezua/add-auth-token: 'true'
+        exec-create-secret:
+          podMetadata:
+            annotations:
+              hpe-ezua/add-auth-token: 'true'
+        exec-create-service-account:
+          podMetadata:
+            annotations:
+              hpe-ezua/add-auth-token: 'true'
+        exec-create-serving-runtime:
+          podMetadata:
+            annotations:
+              hpe-ezua/add-auth-token: 'true'
+        exec-sample-inference:
+          podMetadata:
+            annotations:
+              hpe-ezua/add-auth-token: 'true'

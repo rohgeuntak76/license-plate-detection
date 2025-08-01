@@ -1,0 +1,212 @@
+# PIPELINE DEFINITION
+# Name: down-dataset-pipe
+# Inputs:
+#    current_sc: str
+#    dataset_pvc_name: str
+#    dataset_pvc_size: str
+#    download_url: str
+#    output_file: str
+# Outputs:
+#    Output: str
+components:
+  comp-createpvc:
+    executorLabel: exec-createpvc
+    inputDefinitions:
+      parameters:
+        access_modes:
+          description: 'AccessModes to request for the provisioned PVC. May
+
+            be one or more of ``''ReadWriteOnce''``, ``''ReadOnlyMany''``, ``''ReadWriteMany''``,
+            or
+
+            ``''ReadWriteOncePod''``. Corresponds to `PersistentVolumeClaim.spec.accessModes
+            <https://kubernetes.io/docs/concepts/storage/persistent-volumes/#access-modes>`_.'
+          parameterType: LIST
+        annotations:
+          description: Annotations for the PVC's metadata. Corresponds to `PersistentVolumeClaim.metadata.annotations
+            <https://kubernetes.io/docs/reference/kubernetes-api/config-and-storage-resources/persistent-volume-claim-v1/#PersistentVolumeClaim>`_.
+          isOptional: true
+          parameterType: STRUCT
+        pvc_name:
+          description: 'Name of the PVC. Corresponds to `PersistentVolumeClaim.metadata.name
+            <https://kubernetes.io/docs/reference/kubernetes-api/config-and-storage-resources/persistent-volume-claim-v1/#PersistentVolumeClaim>`_.
+            Only one of ``pvc_name`` and ``pvc_name_suffix`` can
+
+            be provided.'
+          isOptional: true
+          parameterType: STRING
+        pvc_name_suffix:
+          description: 'Prefix to use for a dynamically generated name, which
+
+            will take the form ``<argo-workflow-name>-<pvc_name_suffix>``. Only one
+
+            of ``pvc_name`` and ``pvc_name_suffix`` can be provided.'
+          isOptional: true
+          parameterType: STRING
+        size:
+          description: The size of storage requested by the PVC that will be provisioned.
+            For example, ``'5Gi'``. Corresponds to `PersistentVolumeClaim.spec.resources.requests.storage
+            <https://kubernetes.io/docs/reference/kubernetes-api/config-and-storage-resources/persistent-volume-claim-v1/#PersistentVolumeClaimSpec>`_.
+          parameterType: STRING
+        storage_class_name:
+          defaultValue: ''
+          description: 'Name of StorageClass from which to provision the PV
+
+            to back the PVC. ``None`` indicates to use the cluster''s default
+
+            storage_class_name. Set to ``''''`` for a statically specified PVC.'
+          isOptional: true
+          parameterType: STRING
+        volume_name:
+          description: 'Pre-existing PersistentVolume that should back the
+
+            provisioned PersistentVolumeClaim. Used for statically
+
+            specified PV only. Corresponds to `PersistentVolumeClaim.spec.volumeName
+            <https://kubernetes.io/docs/reference/kubernetes-api/config-and-storage-resources/persistent-volume-claim-v1/#PersistentVolumeClaimSpec>`_.'
+          isOptional: true
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        name:
+          parameterType: STRING
+  comp-download-dataset:
+    executorLabel: exec-download-dataset
+    inputDefinitions:
+      parameters:
+        dataset_pvc_name:
+          parameterType: STRING
+        download_url:
+          parameterType: STRING
+        output_file:
+          parameterType: STRING
+        target_path:
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: STRING
+deploymentSpec:
+  executors:
+    exec-createpvc:
+      container:
+        image: argostub/createpvc
+    exec-download-dataset:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - download_dataset
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.7.0'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"\
+          $0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef download_dataset(download_url: str, output_file: str, target_path:\
+          \ str, dataset_pvc_name: str) -> str:\n    import os\n    import subprocess\n\
+          \n    result = subprocess.run(['curl','-L','-o', output_file, download_url],capture_output=True,\
+          \ text=True)\n    if result.returncode == 0:\n        if os.path.exists(output_file):\n\
+          \            print(f\"Successfully downloaded {output_file}\")\n       \
+          \     print(f\"File size: {os.path.getsize(output_file)} bytes\")\n    \
+          \    else:\n            print(\"Download completed but file not found\"\
+          )\n    else:\n        print(f\"Curl failed with return code {result.returncode}\"\
+          )\n        print(f\"Error: {result.stderr}\")\n\n    subprocess.run(['pwd'])\n\
+          \    subprocess.run(['ls','-al'])\n    # unzip into the PVC \n    subprocess.run(['unzip',output_file,'-d',\
+          \ target_path])\n    return dataset_pvc_name\n\n"
+        image: python:3.7
+pipelineInfo:
+  name: down-dataset-pipe
+root:
+  dag:
+    outputs:
+      parameters:
+        Output:
+          valueFromParameter:
+            outputParameterKey: Output
+            producerSubtask: download-dataset
+    tasks:
+      createpvc:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-createpvc
+        inputs:
+          parameters:
+            access_modes:
+              runtimeValue:
+                constant:
+                - ReadWriteMany
+            pvc_name_suffix:
+              componentInputParameter: dataset_pvc_name
+            size:
+              componentInputParameter: dataset_pvc_size
+            storage_class_name:
+              componentInputParameter: current_sc
+        taskInfo:
+          name: createpvc
+      download-dataset:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-download-dataset
+        dependentTasks:
+        - createpvc
+        inputs:
+          parameters:
+            dataset_pvc_name:
+              taskOutputParameter:
+                outputParameterKey: name
+                producerTask: createpvc
+            download_url:
+              componentInputParameter: download_url
+            output_file:
+              componentInputParameter: output_file
+            target_path:
+              runtimeValue:
+                constant: /data
+        taskInfo:
+          name: download-dataset
+  inputDefinitions:
+    parameters:
+      current_sc:
+        parameterType: STRING
+      dataset_pvc_name:
+        parameterType: STRING
+      dataset_pvc_size:
+        parameterType: STRING
+      download_url:
+        parameterType: STRING
+      output_file:
+        parameterType: STRING
+  outputDefinitions:
+    parameters:
+      Output:
+        parameterType: STRING
+schemaVersion: 2.1.0
+sdkVersion: kfp-2.7.0
+---
+platforms:
+  kubernetes:
+    deploymentSpec:
+      executors:
+        exec-download-dataset:
+          pvcMount:
+          - mountPath: /data
+            taskOutputParameter:
+              outputParameterKey: name
+              producerTask: createpvc

@@ -1,0 +1,630 @@
+# PIPELINE DEFINITION
+# Name: preparing-model-pipeline
+# Inputs:
+#    base_model: str
+#    datasets_pvc_name: str
+#    epochs: int
+#    mlflow_experiment: str
+#    mlflow_s3_url: str
+#    mlflow_url: str
+# Outputs:
+#    Output: str
+components:
+  comp-benchmark-model:
+    executorLabel: exec-benchmark-model
+    inputDefinitions:
+      artifacts:
+        finetuned_model:
+          artifactType:
+            schemaTitle: system.Model
+            schemaVersion: 0.0.1
+      parameters:
+        dataset_path:
+          parameterType: STRING
+    outputDefinitions:
+      artifacts:
+        benchmark_result:
+          artifactType:
+            schemaTitle: system.Artifact
+            schemaVersion: 0.0.1
+  comp-createpvc:
+    executorLabel: exec-createpvc
+    inputDefinitions:
+      parameters:
+        access_modes:
+          description: 'AccessModes to request for the provisioned PVC. May
+
+            be one or more of ``''ReadWriteOnce''``, ``''ReadOnlyMany''``, ``''ReadWriteMany''``,
+            or
+
+            ``''ReadWriteOncePod''``. Corresponds to `PersistentVolumeClaim.spec.accessModes
+            <https://kubernetes.io/docs/concepts/storage/persistent-volumes/#access-modes>`_.'
+          parameterType: LIST
+        annotations:
+          description: Annotations for the PVC's metadata. Corresponds to `PersistentVolumeClaim.metadata.annotations
+            <https://kubernetes.io/docs/reference/kubernetes-api/config-and-storage-resources/persistent-volume-claim-v1/#PersistentVolumeClaim>`_.
+          isOptional: true
+          parameterType: STRUCT
+        pvc_name:
+          description: 'Name of the PVC. Corresponds to `PersistentVolumeClaim.metadata.name
+            <https://kubernetes.io/docs/reference/kubernetes-api/config-and-storage-resources/persistent-volume-claim-v1/#PersistentVolumeClaim>`_.
+            Only one of ``pvc_name`` and ``pvc_name_suffix`` can
+
+            be provided.'
+          isOptional: true
+          parameterType: STRING
+        pvc_name_suffix:
+          description: 'Prefix to use for a dynamically generated name, which
+
+            will take the form ``<argo-workflow-name>-<pvc_name_suffix>``. Only one
+
+            of ``pvc_name`` and ``pvc_name_suffix`` can be provided.'
+          isOptional: true
+          parameterType: STRING
+        size:
+          description: The size of storage requested by the PVC that will be provisioned.
+            For example, ``'5Gi'``. Corresponds to `PersistentVolumeClaim.spec.resources.requests.storage
+            <https://kubernetes.io/docs/reference/kubernetes-api/config-and-storage-resources/persistent-volume-claim-v1/#PersistentVolumeClaimSpec>`_.
+          parameterType: STRING
+        storage_class_name:
+          defaultValue: ''
+          description: 'Name of StorageClass from which to provision the PV
+
+            to back the PVC. ``None`` indicates to use the cluster''s default
+
+            storage_class_name. Set to ``''''`` for a statically specified PVC.'
+          isOptional: true
+          parameterType: STRING
+        volume_name:
+          description: 'Pre-existing PersistentVolume that should back the
+
+            provisioned PersistentVolumeClaim. Used for statically
+
+            specified PV only. Corresponds to `PersistentVolumeClaim.spec.volumeName
+            <https://kubernetes.io/docs/reference/kubernetes-api/config-and-storage-resources/persistent-volume-claim-v1/#PersistentVolumeClaimSpec>`_.'
+          isOptional: true
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        name:
+          parameterType: STRING
+  comp-export-license-detect-model:
+    executorLabel: exec-export-license-detect-model
+    inputDefinitions:
+      artifacts:
+        finetuned_model:
+          artifactType:
+            schemaTitle: system.Model
+            schemaVersion: 0.0.1
+    outputDefinitions:
+      artifacts:
+        engine:
+          artifactType:
+            schemaTitle: system.Model
+            schemaVersion: 0.0.1
+        license_config:
+          artifactType:
+            schemaTitle: system.Artifact
+            schemaVersion: 0.0.1
+  comp-export-vehicle-detect-model:
+    executorLabel: exec-export-vehicle-detect-model
+    inputDefinitions:
+      parameters:
+        base_model:
+          parameterType: STRING
+    outputDefinitions:
+      artifacts:
+        engine:
+          artifactType:
+            schemaTitle: system.Model
+            schemaVersion: 0.0.1
+        vehicle_config:
+          artifactType:
+            schemaTitle: system.Artifact
+            schemaVersion: 0.0.1
+  comp-finetune-model:
+    executorLabel: exec-finetune-model
+    inputDefinitions:
+      parameters:
+        base_model:
+          parameterType: STRING
+        dataset_path:
+          parameterType: STRING
+        epochs:
+          parameterType: NUMBER_INTEGER
+        mlflow_experiment:
+          parameterType: STRING
+        mlflow_s3_url:
+          parameterType: STRING
+        mlflow_url:
+          parameterType: STRING
+    outputDefinitions:
+      artifacts:
+        finetuned_model:
+          artifactType:
+            schemaTitle: system.Model
+            schemaVersion: 0.0.1
+  comp-upload-engines:
+    executorLabel: exec-upload-engines
+    inputDefinitions:
+      artifacts:
+        license_config:
+          artifactType:
+            schemaTitle: system.Artifact
+            schemaVersion: 0.0.1
+        license_engine:
+          artifactType:
+            schemaTitle: system.Model
+            schemaVersion: 0.0.1
+        vehicle_config:
+          artifactType:
+            schemaTitle: system.Artifact
+            schemaVersion: 0.0.1
+        vehicle_engine:
+          artifactType:
+            schemaTitle: system.Model
+            schemaVersion: 0.0.1
+      parameters:
+        mlflow_s3_url:
+          parameterType: STRING
+        mlflow_url:
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        Output:
+          parameterType: STRING
+deploymentSpec:
+  executors:
+    exec-benchmark-model:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - benchmark_model
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.7.0'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"\
+          $0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef benchmark_model(finetuned_model: Input[Model], dataset_path:\
+          \ str, benchmark_result: Output[Artifact]):\n    import subprocess\n   \
+          \ subprocess.run(['nvidia-smi'])\n    subprocess.run(['pwd'])\n\n    from\
+          \ ultralytics import YOLO\n    from ultralytics.utils.benchmarks import\
+          \ benchmark\n    import pandas as pd\n    import os\n    import time\n \
+          \   import torch\n    import pandas\n\n    test_formats = ['-','torchscript','onnx','engine']\n\
+          \n    # Copy model file into YOLO compatible name. --.pt\n    subprocess.run(['cp',finetuned_model.path,finetuned_model.path\
+          \ + '.pt'])\n\n    model_path = finetuned_model.path + '.pt'\n    all_result\
+          \ = pd.DataFrame(columns=['Format','Status\u2754', 'Size (MB)', 'metrics/mAP50-95(B)',\
+          \ 'Inference time (ms/im)', 'FPS'])\n\n    for format in test_formats:\n\
+          \        result = benchmark(model=model_path, data=dataset_path, device=0,format=format)\n\
+          \        half_result = benchmark(model=model_path, data=dataset_path, device=0,format=format,half=True)\n\
+          \        half_result['Format'] = half_result['Format'] + '_half'\n\n   \
+          \     all_result = pd.concat([all_result,result],ignore_index=True)\n  \
+          \      all_result = pd.concat([all_result,half_result],ignore_index=True)\n\
+          \n    print(all_result)\n    all_result.to_csv(benchmark_result.path)\n\n"
+        image: geuntakroh/kfp-test:v0.7
+        resources:
+          accelerator:
+            count: '1'
+            type: nvidia.com/gpu
+          cpuLimit: 4.0
+          memoryLimit: 17.179869184
+    exec-createpvc:
+      container:
+        image: argostub/createpvc
+    exec-export-license-detect-model:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - export_license_detect_model
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.7.0'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"\
+          $0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef export_license_detect_model(finetuned_model: Input[Model], engine:\
+          \ Output[Model], license_config: Output[Artifact]):\n    import subprocess\n\
+          \    # Copy model file into YOLO compatible name. --.pt\n    subprocess.run(['cp',finetuned_model.path,finetuned_model.path\
+          \ + '.pt'])\n\n    from ultralytics import YOLO\n    import torch\n    #\
+          \ Retrieve metadata during export. Metadata needs to be added to config.pbtxt.\
+          \ See next section.\n    metadata_license = []\n    def export_cb_for_license(exporter):\n\
+          \        metadata_license.append(exporter.metadata)\n\n    license_detector\
+          \ = YOLO(finetuned_model.path + '.pt')\n    license_detector.add_callback(\"\
+          on_export_end\", export_cb_for_license)\n\n    # Export the model\n    license_detector_engine\
+          \ = license_detector.export(format=\"engine\", dynamic=True,half=True,device=0,nms=True)\n\
+          \    subprocess.run(['cp',license_detector_engine,engine.path])\n    # change\
+          \ Dimensions properly\n    data = \"\"\"\n# Add metadata\nparameters {\n\
+          \  key: \"metadata\"\n  value {\n    string_value: \"%s\"\n  }\n}\n\nname:\
+          \ \"license_detector\"\nplatform: \"tensorrt_plan\"\nmax_batch_size : 0\n\
+          input [\n  {\n    name: \"images\"\n    dims: [ -1, 3, -1, -1 ]\n  }\n]\n\
+          output [\n  {\n    name: \"output0\"\n    dims: [ -1, 300, 6 ]\n  }\n]\n\
+          \"\"\" % metadata_license[0]\n\n    with open(license_config.path, \"w\"\
+          ) as f:\n        f.write(data)\n\n"
+        image: geuntakroh/kfp-test:v0.7
+        resources:
+          accelerator:
+            count: '1'
+            type: nvidia.com/gpu
+          cpuLimit: 4.0
+          memoryLimit: 17.179869184
+    exec-export-vehicle-detect-model:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - export_vehicle_detect_model
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.7.0'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"\
+          $0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef export_vehicle_detect_model(base_model: str, engine: Output[Model],\
+          \ vehicle_config: Output[Artifact]):\n    from ultralytics import YOLO\n\
+          \    import torch\n    import subprocess\n\n    # Retrieve metadata during\
+          \ export. Metadata needs to be added to config.pbtxt. See next section.\n\
+          \    metadata_vehicle = []\n    def export_cb_for_vehicle(exporter):\n \
+          \       metadata_vehicle.append(exporter.metadata)\n\n    vehicle_detector\
+          \ = YOLO(base_model)\n    vehicle_detector.add_callback(\"on_export_end\"\
+          , export_cb_for_vehicle)\n\n    # Export the model\n    vehicle_detector_engine\
+          \ = vehicle_detector.export(format=\"engine\", dynamic=True,half=True,device=0,nms=True)\n\
+          \    subprocess.run(['cp',vehicle_detector_engine,engine.path])\n    # change\
+          \ Dimensions properly\n    data = \"\"\"\n# Add metadata\nparameters {\n\
+          \  key: \"metadata\"\n  value {\n    string_value: \"%s\"\n  }\n}\n\nname:\
+          \ \"vehicle_detector\"\nplatform: \"tensorrt_plan\"\nmax_batch_size : 0\n\
+          input [\n  {\n    name: \"images\"\n    dims: [ -1, 3, -1, -1 ]\n  }\n]\n\
+          output [\n  {\n    name: \"output0\"\n    dims: [ -1, 300, 6 ]\n  }\n]\n\
+          \"\"\" % metadata_vehicle[0]\n\n    with open(vehicle_config.path, \"w\"\
+          ) as f:\n        f.write(data)\n\n"
+        image: geuntakroh/kfp-test:v0.7
+        resources:
+          accelerator:
+            count: '1'
+            type: nvidia.com/gpu
+          cpuLimit: 4.0
+          memoryLimit: 17.179869184
+    exec-finetune-model:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - finetune_model
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.7.0'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"\
+          $0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef finetune_model(base_model: str, dataset_path: str, epochs:int,\
+          \ mlflow_url: str, mlflow_s3_url: str, mlflow_experiment: str,finetuned_model:\
+          \ Output[Model]):\n    import subprocess\n    subprocess.run(['nvidia-smi'])\n\
+          \    subprocess.run(['pwd'])\n\n    from ultralytics import YOLO\n    import\
+          \ os\n    import time\n\n    def update_token(trainer):\n        with open('/etc/secrets/ezua/.auth_token','r')\
+          \ as file:\n            AUTH_TOKEN = file.read()\n            os.environ['MLFLOW_TRACKING_TOKEN']=AUTH_TOKEN\n\
+          \            os.environ[\"AWS_ACCESS_KEY_ID\"] = AUTH_TOKEN\n          \
+          \  os.environ[\"AWS_SECRET_ACCESS_KEY\"] = \"s3\"\n            print(\"\
+          Token successfully synced!!\")\n\n    model = YOLO(base_model)\n    model.add_callback(\"\
+          on_model_save\",update_token)\n    model.callbacks[\"on_model_save\"]\n\n\
+          \    # MLFLOW configurations\n    run_name = model.model_name.name.replace('.pt','-')\
+          \ +time.strftime(\"%Y%m%d-%H%M%S\", time.localtime())\n    os.environ['MLFLOW_RUN']\
+          \ = run_name\n    os.environ['MLFLOW_TRACKING_URI'] = mlflow_url\n    os.environ['MLFLOW_S3_ENDPOINT_URL']\
+          \ = mlflow_s3_url\n    os.environ['MLFLOW_EXPERIMENT_NAME'] = mlflow_experiment\n\
+          \    os.environ['MLFLOW_TRACKING_INSECURE_TLS'] = 'true'\n    os.environ['MLFLOW_S3_IGNORE_TLS']\
+          \ = 'true'\n\n    # Set the Token\n    update_token('dummy')\n\n    results\
+          \ = model.train(data=dataset_path, epochs=epochs)  # train the model\n \
+          \   model_path = results.save_dir.joinpath(\"weights/best.pt\")\n\n    subprocess.run(['cp',model_path,finetuned_model.path])\n\
+          \    print('Information about the artifact')\n    print('Name:', finetuned_model.name)\n\
+          \    print('URI:', finetuned_model.uri)\n    print('Path:', finetuned_model.path)\n\
+          \    print('Metadata:', finetuned_model.metadata)\n\n"
+        image: geuntakroh/kfp-test:v0.7
+        resources:
+          accelerator:
+            count: '1'
+            type: nvidia.com/gpu
+          cpuLimit: 4.0
+          memoryLimit: 17.179869184
+    exec-upload-engines:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - upload_engines
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.7.0'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"\
+          $0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef upload_engines(\n    mlflow_url: str,\n    mlflow_s3_url: str,\n\
+          \    license_engine: Input[Model],\n    license_config: Input[Artifact],\n\
+          \    vehicle_engine: Input[Model],\n    vehicle_config: Input[Artifact]\n\
+          ) -> str:\n    from pathlib import Path\n    import shutil\n    import os\n\
+          \    import time\n    import subprocess\n\n    base = Path(\"triton_engines\"\
+          )\n\n    # Model configurations\n    models = [\n        (\"license_detector\"\
+          , license_config.path, license_engine.path, 1),\n        (\"vehicle_detector\"\
+          , vehicle_config.path, vehicle_engine.path, 1)\n    ]\n\n    for model_name,\
+          \ config_file, engine_file,version in models:\n        # Create directory\
+          \ structure\n        model_dir = base / model_name\n        version_dir\
+          \ = model_dir / str(version)\n        version_dir.mkdir(parents=True, exist_ok=True)\n\
+          \n        # Move files\n        shutil.copy(config_file, model_dir / \"\
+          config.pbtxt\")\n        shutil.copy(engine_file, version_dir / \"model.plan\"\
+          )\n\n    def display_tree(directory, prefix=\"\", is_last=True):\n     \
+          \   \"\"\"Display directory tree using pathlib\"\"\"\n        directory\
+          \ = Path(directory)\n        print(prefix + (\"\u2514\u2500\u2500 \" if\
+          \ is_last else \"\u251C\u2500\u2500 \") + directory.name)\n\n        if\
+          \ directory.is_dir():\n            children = sorted(directory.iterdir())\n\
+          \            for i, child in enumerate(children):\n                is_last_child\
+          \ = i == len(children) - 1\n                new_prefix = prefix + (\"  \
+          \  \" if is_last else \"\u2502   \")\n                display_tree(child,\
+          \ new_prefix, is_last_child)\n\n    path = Path(\"triton_engines\")\n  \
+          \  display_tree(path)\n\n    # Logging Engine Artifacts at MLFlow\n    os.environ['MLFLOW_TRACKING_URI']\
+          \ = mlflow_url\n    os.environ['MLFLOW_S3_ENDPOINT_URL'] = mlflow_s3_url\n\
+          \    with open('/etc/secrets/ezua/.auth_token','r') as file:\n        AUTH_TOKEN\
+          \ = file.read()\n        os.environ['MLFLOW_TRACKING_TOKEN']=AUTH_TOKEN\n\
+          \        os.environ[\"AWS_ACCESS_KEY_ID\"] = AUTH_TOKEN\n        os.environ[\"\
+          AWS_SECRET_ACCESS_KEY\"] = \"s3\"\n\n    result = subprocess.run(\n    \
+          \    ['python',\n         'mlflow_scripts/publish_model_to_mlflow.py',\n\
+          \         '--model_name',\n         'license-detectors',\n         '--model_directory',\n\
+          \         './triton_engines',\n         '--flavor',\n         'triton'],capture_output=True,text=True)\n\
+          \    s3_uri = \"s3://\" + result.stdout.split(\"s3://\")[1].strip() + '/triton/triton_engines'\n\
+          \    print(s3_uri)\n    return s3_uri\n\n"
+        image: geuntakroh/kfp-test:v0.7
+pipelineInfo:
+  name: preparing-model-pipeline
+root:
+  dag:
+    outputs:
+      parameters:
+        Output:
+          valueFromParameter:
+            outputParameterKey: Output
+            producerSubtask: upload-engines
+    tasks:
+      benchmark-model:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-benchmark-model
+        dependentTasks:
+        - finetune-model
+        inputs:
+          artifacts:
+            finetuned_model:
+              taskOutputArtifact:
+                outputArtifactKey: finetuned_model
+                producerTask: finetune-model
+          parameters:
+            dataset_path:
+              runtimeValue:
+                constant: /data/data.yaml
+        taskInfo:
+          name: benchmark-model
+      createpvc:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-createpvc
+        inputs:
+          parameters:
+            access_modes:
+              runtimeValue:
+                constant:
+                - ReadWriteMany
+            pvc_name:
+              runtimeValue:
+                constant: mimic-dev-shm
+            size:
+              runtimeValue:
+                constant: 5Gi
+            storage_class_name:
+              runtimeValue:
+                constant: gl4f-filesystem
+        taskInfo:
+          name: createpvc
+      export-license-detect-model:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-export-license-detect-model
+        dependentTasks:
+        - finetune-model
+        inputs:
+          artifacts:
+            finetuned_model:
+              taskOutputArtifact:
+                outputArtifactKey: finetuned_model
+                producerTask: finetune-model
+        taskInfo:
+          name: export-license-detect-model
+      export-vehicle-detect-model:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-export-vehicle-detect-model
+        inputs:
+          parameters:
+            base_model:
+              componentInputParameter: base_model
+        taskInfo:
+          name: export-vehicle-detect-model
+      finetune-model:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-finetune-model
+        inputs:
+          parameters:
+            base_model:
+              componentInputParameter: base_model
+            dataset_path:
+              runtimeValue:
+                constant: /data/data.yaml
+            epochs:
+              componentInputParameter: epochs
+            mlflow_experiment:
+              componentInputParameter: mlflow_experiment
+            mlflow_s3_url:
+              componentInputParameter: mlflow_s3_url
+            mlflow_url:
+              componentInputParameter: mlflow_url
+        taskInfo:
+          name: finetune-model
+      upload-engines:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-upload-engines
+        dependentTasks:
+        - export-license-detect-model
+        - export-vehicle-detect-model
+        inputs:
+          artifacts:
+            license_config:
+              taskOutputArtifact:
+                outputArtifactKey: license_config
+                producerTask: export-license-detect-model
+            license_engine:
+              taskOutputArtifact:
+                outputArtifactKey: engine
+                producerTask: export-license-detect-model
+            vehicle_config:
+              taskOutputArtifact:
+                outputArtifactKey: vehicle_config
+                producerTask: export-vehicle-detect-model
+            vehicle_engine:
+              taskOutputArtifact:
+                outputArtifactKey: engine
+                producerTask: export-vehicle-detect-model
+          parameters:
+            mlflow_s3_url:
+              componentInputParameter: mlflow_s3_url
+            mlflow_url:
+              componentInputParameter: mlflow_url
+        taskInfo:
+          name: upload-engines
+  inputDefinitions:
+    parameters:
+      base_model:
+        parameterType: STRING
+      datasets_pvc_name:
+        parameterType: STRING
+      epochs:
+        parameterType: NUMBER_INTEGER
+      mlflow_experiment:
+        parameterType: STRING
+      mlflow_s3_url:
+        parameterType: STRING
+      mlflow_url:
+        parameterType: STRING
+  outputDefinitions:
+    parameters:
+      Output:
+        parameterType: STRING
+schemaVersion: 2.1.0
+sdkVersion: kfp-2.7.0
+---
+platforms:
+  kubernetes:
+    deploymentSpec:
+      executors:
+        exec-benchmark-model:
+          podMetadata:
+            annotations:
+              hpe-ezua/add-auth-token: 'true'
+          pvcMount:
+          - componentInputParameter: datasets_pvc_name
+            mountPath: /data
+        exec-export-license-detect-model:
+          podMetadata:
+            annotations:
+              hpe-ezua/add-auth-token: 'true'
+        exec-export-vehicle-detect-model:
+          podMetadata:
+            annotations:
+              hpe-ezua/add-auth-token: 'true'
+        exec-finetune-model:
+          podMetadata:
+            annotations:
+              hpe-ezua/add-auth-token: 'true'
+          pvcMount:
+          - componentInputParameter: datasets_pvc_name
+            mountPath: /data
+          - constant: mimic-dev-shm
+            mountPath: /dev/shm
+        exec-upload-engines:
+          podMetadata:
+            annotations:
+              hpe-ezua/add-auth-token: 'true'
