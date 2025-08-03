@@ -1,20 +1,20 @@
 # PIPELINE DEFINITION
 # Name: lp-number-dection-video
 # Inputs:
-#    license_conf: int [Default: 0.5]
+#    license_conf: float [Default: 0.5]
 #    model_url: str
-#    vehicle_conf: int [Default: 0.5]
+#    vehicle_conf: float [Default: 0.5]
 components:
   comp-inference-video:
     executorLabel: exec-inference-video
     inputDefinitions:
       parameters:
         license_conf:
-          parameterType: NUMBER_INTEGER
+          parameterType: NUMBER_DOUBLE
         model_url:
           parameterType: STRING
         vehicle_conf:
-          parameterType: NUMBER_INTEGER
+          parameterType: NUMBER_DOUBLE
     outputDefinitions:
       artifacts:
         inference_results_csv:
@@ -63,9 +63,9 @@ deploymentSpec:
 
           '
         - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
-          \ *\n\ndef inference_video(model_url:str,vehicle_conf: int,license_conf:\
-          \ int,inference_results_csv: Output[Artifact]):\n    from ultralytics import\
-          \ YOLO\n    import easyocr\n    import cv2 as cv\n    import matplotlib.pyplot\
+          \ *\n\ndef inference_video(model_url:str,vehicle_conf: float,license_conf:\
+          \ float,inference_results_csv: Output[Artifact]):\n    from ultralytics\
+          \ import YOLO\n    import easyocr\n    import cv2 as cv\n    import matplotlib.pyplot\
           \ as plt\n    import pandas as pd\n    from urllib.parse import urlparse\n\
           \    import string\n\n    parts = urlparse(model_url)\n    split = parts.netloc.split('.')[0]\n\
           \    svc_name, namespace = split.split('-predictor-')\n    url_for_yolo\
@@ -267,13 +267,13 @@ root:
       license_conf:
         defaultValue: 0.5
         isOptional: true
-        parameterType: NUMBER_INTEGER
+        parameterType: NUMBER_DOUBLE
       model_url:
         parameterType: STRING
       vehicle_conf:
         defaultValue: 0.5
         isOptional: true
-        parameterType: NUMBER_INTEGER
+        parameterType: NUMBER_DOUBLE
 schemaVersion: 2.1.0
 sdkVersion: kfp-2.7.0
 ---
