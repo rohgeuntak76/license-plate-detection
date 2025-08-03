@@ -369,6 +369,9 @@ deploymentSpec:
           \ ])    \n    subprocess.run(['cp',license_output_file,license_detection_result.path\
           \ ])    \n\n"
         image: geuntakroh/kfp-test:v0.9
+        resources:
+          cpuLimit: 4.0
+          memoryLimit: 17.179869184
 pipelineInfo:
   name: create-inference-service-pipeline
 root:
