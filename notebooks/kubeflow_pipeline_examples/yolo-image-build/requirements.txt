@@ -1,0 +1,14 @@
+ultralytics==8.3.152 
+lap==0.5.12
+mlflow==2.16.0
+boto3==1.35.40
+onnxruntime-gpu==1.22.0
+onnx==1.17.0
+onnxslim==0.1.56
+tensorrt==10.8.0.43
+tensorrt-cu12-bindings==10.8.0.43 
+tensorrt-cu12-libs==10.8.0.43 
+tritonclient[all]
+kserve==0.15.2
+kubernetes==26.1.0
+easyocr==1.7.2

@@ -1,0 +1,22 @@
+# FROM python:3.11
+FROM geuntakroh/python-opencv-headless-h264:3.11-slim
+
+RUN mkdir -p /workspace/mlflow_scripts && chmod -R 777 /workspace
+WORKDIR /workspace
+
+# opencv-python dependencies
+RUN apt-get update && apt-get install ffmpeg libsm6 libxext6  -y && rm -rf /var/lib/apt/lists/*
+
+COPY ./requirements.txt .
+
+RUN pip install --no-cache-dir --extra-index-url https://pypi.nvidia.com/ --trusted-host pypi.nvidia.com -r requirements.txt
+
+#patch /usr/local/lib/python3.11/site-packages/ultralytics/utils/export.py 
+COPY ./export.py_meta_8.3.152 /usr/local/lib/python3.11/site-packages/ultralytics/utils/export.py 
+COPY ./triton.py_token /usr/local/lib/python3.11/site-packages/ultralytics/utils/triton.py 
+
+# Copy Mlflow utils
+COPY ./mlflow_scripts ./mlflow_scripts
+COPY ./Samples ./Samples
+
+ENV EASYOCR_MODULE_PATH="/workspace/.EasyOCR"
