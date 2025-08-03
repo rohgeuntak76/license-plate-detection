@@ -217,7 +217,7 @@ deploymentSpec:
           \     all_result = pd.concat([all_result,result],ignore_index=True)\n  \
           \      all_result = pd.concat([all_result,half_result],ignore_index=True)\n\
           \n    print(all_result)\n    all_result.to_csv(benchmark_result.path)\n\n"
-        image: geuntakroh/kfp-test:v0.7
+        image: geuntakroh/kfp-test:v0.9
         resources:
           accelerator:
             count: '1'
@@ -271,7 +271,7 @@ deploymentSpec:
           output [\n  {\n    name: \"output0\"\n    dims: [ -1, 300, 6 ]\n  }\n]\n\
           \"\"\" % metadata_license[0]\n\n    with open(license_config.path, \"w\"\
           ) as f:\n        f.write(data)\n\n"
-        image: geuntakroh/kfp-test:v0.7
+        image: geuntakroh/kfp-test:v0.9
         resources:
           accelerator:
             count: '1'
@@ -321,7 +321,7 @@ deploymentSpec:
           output [\n  {\n    name: \"output0\"\n    dims: [ -1, 300, 6 ]\n  }\n]\n\
           \"\"\" % metadata_vehicle[0]\n\n    with open(vehicle_config.path, \"w\"\
           ) as f:\n        f.write(data)\n\n"
-        image: geuntakroh/kfp-test:v0.7
+        image: geuntakroh/kfp-test:v0.9
         resources:
           accelerator:
             count: '1'
@@ -375,7 +375,7 @@ deploymentSpec:
           \    print('Information about the artifact')\n    print('Name:', finetuned_model.name)\n\
           \    print('URI:', finetuned_model.uri)\n    print('Path:', finetuned_model.path)\n\
           \    print('Metadata:', finetuned_model.metadata)\n\n"
-        image: geuntakroh/kfp-test:v0.7
+        image: geuntakroh/kfp-test:v0.9
         resources:
           accelerator:
             count: '1'
@@ -441,7 +441,7 @@ deploymentSpec:
           \         './triton_engines',\n         '--flavor',\n         'triton'],capture_output=True,text=True)\n\
           \    s3_uri = \"s3://\" + result.stdout.split(\"s3://\")[1].strip() + '/triton/triton_engines'\n\
           \    print(s3_uri)\n    return s3_uri\n\n"
-        image: geuntakroh/kfp-test:v0.7
+        image: geuntakroh/kfp-test:v0.9
 pipelineInfo:
   name: preparing-model-pipeline
 root:

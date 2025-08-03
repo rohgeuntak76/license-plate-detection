@@ -156,7 +156,7 @@ deploymentSpec:
           \      return url\n            print(f\"url is not ready for {created_isvc['metadata']['name']}\"\
           )\n            time.sleep(3)\n        ## Create servingruntime snippet end\n\
           \n"
-        image: geuntakroh/kfp-test:v0.7
+        image: geuntakroh/kfp-test:v0.9
     exec-create-secret:
       container:
         args:
@@ -210,7 +210,7 @@ deploymentSpec:
           \ created successfully in namespace '{namespace}'.\\n api_response:{api_response}\"\
           )\n        ## Create secret snippet end\n        return api_response.metadata.name\n\
           \n"
-        image: geuntakroh/kfp-test:v0.7
+        image: geuntakroh/kfp-test:v0.9
     exec-create-service-account:
       container:
         args:
@@ -258,7 +258,7 @@ deploymentSpec:
           \ created successfully in namespace '{namespace}'.\")\n        ## Create\
           \ Service Account snippet end\n        return api_response.metadata.name\n\
           \n"
-        image: geuntakroh/kfp-test:v0.7
+        image: geuntakroh/kfp-test:v0.9
     exec-create-serving-runtime:
       container:
         args:
@@ -325,7 +325,7 @@ deploymentSpec:
           ,\n            body=runtime_body,\n        )\n        print(f\"Serving Runtime\
           \ created : {api_response['metadata']['name']}\")\n        ## Create servingruntime\
           \ snippet end \n        return api_response['metadata']['name']\n\n"
-        image: geuntakroh/kfp-test:v0.7
+        image: geuntakroh/kfp-test:v0.9
     exec-sample-inference:
       container:
         args:
@@ -368,7 +368,7 @@ deploymentSpec:
           \n    subprocess.run(['cp',vehicle_output_file,vehicle_detection_result.path\
           \ ])    \n    subprocess.run(['cp',license_output_file,license_detection_result.path\
           \ ])    \n\n"
-        image: geuntakroh/kfp-test:v0.7
+        image: geuntakroh/kfp-test:v0.9
 pipelineInfo:
   name: create-inference-service-pipeline
 root:
