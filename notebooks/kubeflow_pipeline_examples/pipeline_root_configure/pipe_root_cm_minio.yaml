@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kfp-launcher
+  namespace: geun-tak-roh-2e590eb8 
+data:
+  defaultPipelineRoot: "minio://mlpipeline/some/other/path"

@@ -1,0 +1,16 @@
+apiVersion: v1
+data:
+  defaultPipelineRoot: s3://http://local-s3-service.ezdata-system.svc.cluster.local:30000/mlflow.sg2pcai172
+  providers: |-
+    s3:
+      default:
+        endpoint: http://local-s3-service.ezdata-system.svc.cluster.local:30000
+        disableSSL: true
+        region: us-east-1
+        forcePathStyle: true
+        credentials:
+          fromEnv: true
+kind: ConfigMap
+metadata:
+  name: kfp-launcher
+  namespace: geun-tak-roh-2e590eb8 
