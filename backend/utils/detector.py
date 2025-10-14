@@ -109,13 +109,13 @@ def reformat_license_number(detections):
     for detection in detections:
         bbox, text, score = detection
         text = text.upper().replace(' ', '')
-        # return text, score
+        return text, score
         # verify that text is conform to a standard license plate
         # if license_complies_format(text):
         #     # bring text into the default license plate format
         #     return format_license(text), score
     
-    return text, score
+    # return text, score
 
 def crop_vehicle_license_then_read(vehicle_tracker,license_detector,plate_reader,input_image,vehicle_conf: float = 0.25,license_conf: float = 0.25,frame_number: int = 0):
     """
