@@ -115,7 +115,7 @@ def reformat_license_number(detections):
         #     # bring text into the default license plate format
         #     return format_license(text), score
     
-    # return text, score
+    return None, None
 
 def crop_vehicle_license_then_read(vehicle_tracker,license_detector,plate_reader,input_image,vehicle_conf: float = 0.25,license_conf: float = 0.25,frame_number: int = 0):
     """
